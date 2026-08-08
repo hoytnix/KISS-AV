@@ -1,6 +1,6 @@
 # Keep It Simple Stupid Antivirus
 
-## KISS AV v1.1.3
+## KISS AV v1.1.5
 
 Are you deploying unattended machines or sensitive workstations, only to worry about hidden remote access Trojans (RATs) or unauthorized local input? 
 

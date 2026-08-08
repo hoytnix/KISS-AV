@@ -1,6 +1,6 @@
 [package]
 name = "kiss-daemon"
-version = "1.1.3"
+version = "1.1.5"
 edition = "2021"
 description = "KISS Security Daemon"
 authors = ["Michael Hoyt"]
@@ -32,7 +32,7 @@ strip = true
 before-packaging-command = "cargo build --release"
 product-name = "KissDaemon"
 identifier = "com.kiss.daemon"
-formats = ["deb", "nsis", "msi", "dmg"]
+formats = ["all"]
 
 [[package.metadata.packager.binaries]]
 path = "kiss-daemon"
