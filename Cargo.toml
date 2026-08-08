@@ -1,0 +1,33 @@
+[package]
+name = "kiss-daemon"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Shared dependencies
+cfg-if = "1.0"
+goldberg = "*" # Added for string and control flow obfuscation
+
+# Target-specific dependencies
+[target.'cfg(windows)'.dependencies.windows-sys]
+version = "0.59"
+features = [
+    "Win32_Foundation",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_StationsAndDesktops",
+    "Win32_System_SystemInformation",
+]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# Installer generation configuration
+[package.metadata.packager]
+product-name = "KissDaemon"
+identifier = "com.kiss.daemon"
+formats = ["msi", "nsis", "dmg", "deb", "appimage"]
