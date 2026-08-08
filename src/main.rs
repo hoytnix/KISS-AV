@@ -11,7 +11,8 @@ use goldberg::{goldberg_stmts, goldberg_string};
 mod platform {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt;
-    use windows_sys::Win32::Foundation::{BOOL, LPARAM, PWSTR};
+    use windows_sys::core::PWSTR;
+    use windows_sys::Win32::Foundation::{BOOL, LPARAM};
     use windows_sys::Win32::System::StationsAndDesktops::{
         EnumDesktopsW, GetProcessWindowStation,
     };
@@ -37,7 +38,8 @@ mod platform {
         unsafe {
             DETECTED_DESKTOPS.clear();
             let win_station = GetProcessWindowStation();
-            if win_station == 0 {
+            
+            if win_station.is_null() {
                 return Err("Failed to obtain Process Window Station handle.".into());
             }
 
