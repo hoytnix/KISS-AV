@@ -1,4 +1,3 @@
-use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -185,9 +184,7 @@ mod platform {
 // MAIN CORE ENGINE
 // =========================================================================
 fn main() {
-    // Strings are encrypted at compile time so they don't show up in a hex editor
-    let start_msg = goldberg_string!("=== KISS Security Daemon Engine Starting ===");
-    println!("{}", start_msg);
+    println!("{}", goldberg_string!("=== KISS Security Daemon Engine Starting ==="));
 
     let is_afk = Arc::new(AtomicBool::new(false));
 
@@ -203,8 +200,7 @@ fn main() {
     // The main execution flow is obfuscated here
     goldberg_stmts! {
         loop {
-            let sweep_msg = goldberg_string!("[*] Performing 5-second cross-platform security sweep...");
-            println!("{}", sweep_msg);
+            println!("{}", goldberg_string!("[*] Performing 5-second cross-platform security sweep..."));
 
             // Condition 2: Hidden VNC / Secondary Session Inspection
             match platform::scan_for_hidden_desktops() {
