@@ -1,0 +1,39 @@
+name: Release KISS AV
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers the workflow when you push a tag like "v1.0.0"
+
+jobs:
+  build-and-package:
+    name: Build and Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install stable Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-binstall
+        # Uses binstall to fetch the pre-compiled packager instead of compiling from source
+        uses: cargo-bins/cargo-binstall@main
+
+      - name: Install cargo-packager
+        run: cargo binstall cargo-packager --no-confirm
+
+      - name: Compile the Rust binary
+        run: cargo build --release
+
+      - name: Package the application
+        # Automatically detects the packager.json in the root directory
+        run: cargo packager --release
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/release/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
