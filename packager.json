@@ -1,10 +1,10 @@
 {
   "productName": "KissDaemon",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "identifier": "com.kiss.daemon",
   "description": "KISS Security Daemon",
   "authors": ["Michael Hoyt"],
-  "formats": ["deb"],
+  "formats": ["deb", "nsis", "msi", "dmg"],
   "binaries": [
     {
       "path": "target/release/kiss-daemon",
