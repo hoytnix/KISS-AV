@@ -1,6 +1,6 @@
 {
   "productName": "KissDaemon",
-  "version": "0.1.0",
+  "version": "1.1.1",
   "identifier": "com.kiss.daemon",
   "description": "KISS Security Daemon",
   "authors": ["Michael Hoyt"],
