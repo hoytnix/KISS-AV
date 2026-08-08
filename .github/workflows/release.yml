@@ -3,15 +3,19 @@ name: Release KISS AV
 on:
   push:
     tags:
-      - 'v*' # Triggers the workflow when you push a tag like "v1.0.0"
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
   build-and-package:
-    name: Build and Package
-    runs-on: ubuntu-latest
+    name: Package on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - name: Checkout repository
@@ -21,7 +25,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install cargo-binstall
-        # Uses binstall to fetch the pre-compiled packager instead of compiling from source
         uses: cargo-bins/cargo-binstall@main
 
       - name: Install cargo-packager
@@ -30,13 +33,28 @@ jobs:
       - name: Compile the Rust binary
         run: cargo build --release
 
-      - name: Package the application
-        # Automatically detects the packager.json in the root directory
-        run: cargo packager --release
+      # ---------------------------------------------------
+      # EXPLICIT OS-SPECIFIC PACKAGING COMMANDS
+      # ---------------------------------------------------
+      - name: Package for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo packager --release -f deb
+
+      - name: Package for Windows
+        if: matrix.os == 'windows-latest'
+        run: cargo packager --release -f nsis
+
+      - name: Package for macOS
+        if: matrix.os == 'macos-latest'
+        run: cargo packager --release -f dmg
+      # ---------------------------------------------------
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: target/release/*.deb
+          files: |
+            target/release/*.deb
+            target/release/*.exe
+            target/release/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
