@@ -2,11 +2,13 @@
 name = "kiss-daemon"
 version = "0.1.0"
 edition = "2021"
+description = "KISS Security Daemon"
+authors = ["Michael Hoyt"]
 
 [dependencies]
 # Shared dependencies
 cfg-if = "1.0"
-goldberg = "*" # Added for string and control flow obfuscation
+goldberg = "*"
 
 # Target-specific dependencies
 [target.'cfg(windows)'.dependencies.windows-sys]
@@ -26,11 +28,12 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
-# Installer generation configuration
 [package.metadata.packager]
-# Tells the packager how to compile the binary before packaging it
 before-packaging-command = "cargo build --release"
 product-name = "KissDaemon"
 identifier = "com.kiss.daemon"
-# Since you are building locally on Debian, only target Linux formats for now
-formats = ["deb", "appimage"]
+formats = ["deb"]
+
+[[package.metadata.packager.binaries]]
+path = "kiss-daemon"
+main = true
