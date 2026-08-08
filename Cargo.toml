@@ -28,11 +28,6 @@ strip = true
 
 # Installer generation configuration
 [package.metadata.packager]
-product-name = "KissDaemon"
-identifier = "com.kiss.daemon"
-formats = ["msi", "nsis", "dmg", "deb", "appimage"]
-
-[package.metadata.packager]
 # Tells the packager how to compile the binary before packaging it
 before-packaging-command = "cargo build --release"
 product-name = "KissDaemon"
