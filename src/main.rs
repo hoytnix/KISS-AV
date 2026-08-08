@@ -11,7 +11,6 @@ use goldberg::{goldberg_stmts, goldberg_string};
 mod platform {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt;
-    use windows_sys::core::PWSTR;
     use windows_sys::Win32::Foundation::{BOOL, LPARAM};
     use windows_sys::Win32::System::StationsAndDesktops::{
         EnumDesktopsW, GetProcessWindowStation,
@@ -21,7 +20,8 @@ mod platform {
 
     static mut DETECTED_DESKTOPS: Vec<String> = Vec::new();
 
-    unsafe extern "system" fn enum_desktop_proc(lpsz_desktop: PWSTR, _lparam: LPARAM) -> BOOL {
+    // FIX: Swapped PWSTR (*mut u16) to *const u16 to match the strict windows-sys 0.59 typing
+    unsafe extern "system" fn enum_desktop_proc(lpsz_desktop: *const u16, _lparam: isize) -> i32 {
         if !lpsz_desktop.is_null() {
             let mut len = 0;
             while *lpsz_desktop.add(len) != 0 {
