@@ -31,3 +31,11 @@ strip = true
 product-name = "KissDaemon"
 identifier = "com.kiss.daemon"
 formats = ["msi", "nsis", "dmg", "deb", "appimage"]
+
+[package.metadata.packager]
+# Tells the packager how to compile the binary before packaging it
+before-packaging-command = "cargo build --release"
+product-name = "KissDaemon"
+identifier = "com.kiss.daemon"
+# Since you are building locally on Debian, only target Linux formats for now
+formats = ["deb", "appimage"]
