@@ -32,7 +32,7 @@ strip = true
 before-packaging-command = "cargo build --release"
 product-name = "KissDaemon"
 identifier = "com.kiss.daemon"
-formats = ["deb"]
+formats = ["deb", "nsis", "msi", "dmg"]
 
 [[package.metadata.packager.binaries]]
 path = "kiss-daemon"
