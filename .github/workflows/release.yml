@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Triggers the workflow when you push a tag like "v1.0.0"
 
+permissions:
+  contents: write
+
 jobs:
   build-and-package:
     name: Build and Package
