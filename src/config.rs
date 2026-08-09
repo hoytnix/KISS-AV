@@ -1,0 +1,162 @@
+use serde::Deserialize;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+#[derive(Debug, Clone, Default, Deserialize, PartialEq, Eq)]
+pub struct AllowlistConfig {
+    #[serde(default)]
+    pub allowed_x11_displays: Vec<String>,
+    #[serde(default)]
+    pub allowed_virtual_drivers: Vec<String>,
+    #[serde(default)]
+    pub allowed_processes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, PartialEq, Eq)]
+pub struct AppConfig {
+    #[serde(default)]
+    pub allowlist: AllowlistConfig,
+}
+
+impl AppConfig {
+    /// Returns the default path for the configuration file strictly at `$HOME/.kiss/config`.
+    pub fn get_config_path() -> PathBuf {
+        let home = std::env::var("HOME")
+            .or_else(|_| std::env::var("USERPROFILE"))
+            .unwrap_or_else(|_| ".".into());
+        PathBuf::from(home).join(".kiss").join("config")
+    }
+
+    /// Loads configuration from standard `$HOME/.kiss/config`.
+    /// Gracefully falls back to default empty config if missing or unparseable.
+    pub fn load() -> Self {
+        Self::load_from_path(Self::get_config_path())
+    }
+
+    /// Loads configuration from a given path (expanding `~` if needed).
+    /// Gracefully falls back to default empty config on read or parse failure.
+    pub fn load_from_path<P: AsRef<Path>>(path: P) -> Self {
+        let raw_path = path.as_ref();
+        let resolved_path = Self::expand_home(raw_path);
+
+        if let Ok(content) = fs::read_to_string(&resolved_path) {
+            Self::parse(&content).unwrap_or_default()
+        } else {
+            Self::default()
+        }
+    }
+
+    /// Expands `~` prefix to user home directory.
+    fn expand_home(path: &Path) -> PathBuf {
+        if path.starts_with("~") {
+            let home = std::env::var("HOME")
+                .or_else(|_| std::env::var("USERPROFILE"))
+                .unwrap_or_else(|_| ".".into());
+            let mut components = path.components();
+            components.next(); // skip '~'
+            let mut path_buf = PathBuf::from(home);
+            for comp in components {
+                path_buf.push(comp);
+            }
+            path_buf
+        } else {
+            path.to_path_buf()
+        }
+    }
+
+    /// Parses TOML content string into `AppConfig`.
+    pub fn parse(content: &str) -> Result<Self, toml::de::Error> {
+        toml::from_str(content)
+    }
+
+    /// Checks if an X11 display identifier (e.g. "X20" or ":20") is allowed.
+    pub fn is_display_allowed(&self, display: &str) -> bool {
+        self.allowlist.allowed_x11_displays.iter().any(|d| {
+            d == display
+                || (d.starts_with(':') && display.starts_with('X') && &d[1..] == &display[1..])
+                || (d.starts_with('X') && display.starts_with(':') && &d[1..] == &display[1..])
+        })
+    }
+
+    /// Checks if a virtual input driver name is allowed.
+    pub fn is_driver_allowed(&self, driver: &str) -> bool {
+        self.allowlist
+            .allowed_virtual_drivers
+            .iter()
+            .any(|d| d == driver)
+    }
+
+    /// Checks if a process path or command line is allowed.
+    pub fn is_process_allowed(&self, path: &str) -> bool {
+        self.allowlist.allowed_processes.iter().any(|p| p == path)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_valid_config() {
+        let toml_str = r#"
+[allowlist]
+allowed_x11_displays = ["X20", "X21"]
+allowed_virtual_drivers = ["VirtualPS/2 VMware VMMouse"]
+allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"]
+"#;
+        let config = AppConfig::parse(toml_str).expect("Failed to parse valid config");
+        assert_eq!(config.allowlist.allowed_x11_displays, vec!["X20", "X21"]);
+        assert_eq!(
+            config.allowlist.allowed_virtual_drivers,
+            vec!["VirtualPS/2 VMware VMMouse"]
+        );
+        assert_eq!(
+            config.allowlist.allowed_processes,
+            vec!["/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"]
+        );
+    }
+
+    #[test]
+    fn test_partial_config_fallback() {
+        let toml_str = r#"
+[allowlist]
+allowed_x11_displays = ["X20"]
+"#;
+        let config = AppConfig::parse(toml_str).expect("Failed to parse partial config");
+        assert_eq!(config.allowlist.allowed_x11_displays, vec!["X20"]);
+        assert!(config.allowlist.allowed_virtual_drivers.is_empty());
+        assert!(config.allowlist.allowed_processes.is_empty());
+    }
+
+    #[test]
+    fn test_empty_config_and_invalid_fallback() {
+        let empty_config = AppConfig::parse("").unwrap_or_default();
+        assert!(empty_config.allowlist.allowed_x11_displays.is_empty());
+
+        let invalid_config = AppConfig::parse("invalid = [[[").unwrap_or_default();
+        assert!(invalid_config.allowlist.allowed_x11_displays.is_empty());
+    }
+
+    #[test]
+    fn test_allowlist_predicates() {
+        let toml_str = r#"
+[allowlist]
+allowed_x11_displays = ["X20", "X21"]
+allowed_virtual_drivers = ["VirtualPS/2 VMware VMMouse"]
+allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"]
+"#;
+        let config = AppConfig::parse(toml_str).unwrap();
+
+        assert!(config.is_display_allowed("X20"));
+        assert!(config.is_display_allowed("X21"));
+        assert!(!config.is_display_allowed("X0"));
+
+        assert!(config.is_driver_allowed("VirtualPS/2 VMware VMMouse"));
+        assert!(!config.is_driver_allowed("Random Virtual Driver"));
+
+        assert!(config.is_process_allowed(
+            "/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"
+        ));
+        assert!(!config.is_process_allowed("/usr/bin/malware"));
+    }
+}

@@ -1,8 +1,70 @@
+use kiss_daemon::config::AppConfig;
 use kiss_daemon::engine::detector::DetectorEngine;
 use kiss_daemon::engine::fallback::EngineOperatingMode;
 use kiss_daemon::engine::heartbeat::BackgroundActivity;
 use kiss_daemon::platform::{InputEvent, InputSource};
 use std::time::Instant;
+
+#[test]
+fn test_config_parsing_full_partial_and_predicates() {
+    // 1. Valid full config TOML
+    let valid_toml = r#"
+[allowlist]
+allowed_x11_displays = ["X20", "X21"]
+allowed_virtual_drivers = ["VirtualPS/2 VMware VMMouse"]
+allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"]
+"#;
+    let config = AppConfig::parse(valid_toml).expect("Parsing valid TOML failed");
+    assert!(config.is_display_allowed("X20"));
+    assert!(config.is_display_allowed("X21"));
+    assert!(!config.is_display_allowed("X0"));
+    assert!(config.is_driver_allowed("VirtualPS/2 VMware VMMouse"));
+    assert!(!config.is_driver_allowed("VirtualPS/2 Generic Mouse"));
+    assert!(config.is_process_allowed("/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"));
+
+    // 2. Partial config (missing keys fall back cleanly to empty vectors)
+    let partial_toml = r#"
+[allowlist]
+allowed_x11_displays = ["X20"]
+"#;
+    let partial_config = AppConfig::parse(partial_toml).expect("Parsing partial TOML failed");
+    assert_eq!(partial_config.allowlist.allowed_x11_displays, vec!["X20"]);
+    assert!(partial_config.allowlist.allowed_virtual_drivers.is_empty());
+    assert!(partial_config.allowlist.allowed_processes.is_empty());
+
+    // 3. Fall back to empty/default settings for invalid TOML
+    let invalid_config = AppConfig::parse("bad_toml = [[[").unwrap_or_default();
+    assert!(invalid_config.allowlist.allowed_x11_displays.is_empty());
+}
+
+#[test]
+fn test_detector_config_exemption_virtual_driver() {
+    let toml_str = r#"
+[allowlist]
+allowed_virtual_drivers = ["VirtualPS/2 VMware VMMouse"]
+"#;
+    let config = AppConfig::parse(toml_str).unwrap();
+    let detector = DetectorEngine::with_config(15, config);
+    detector.set_test_mode(true);
+    detector.heartbeat.simulate_idle_seconds(20);
+
+    let allowed_event = InputEvent {
+        source: InputSource::SyntheticSoftware,
+        pid: Some(1337),
+        device_name: Some("VirtualPS/2 VMware VMMouse".into()),
+        timestamp: Instant::now(),
+    };
+
+    let violation = detector.process_input_event(&allowed_event);
+    assert!(
+        violation.is_none(),
+        "Input event from allowed virtual driver should be bypassed via config exemption"
+    );
+    assert!(
+        !detector.is_isolation_triggered(),
+        "Allowed virtual driver must not trigger isolation"
+    );
+}
 
 #[test]
 fn test_synthetic_input_triggers_isolation() {
@@ -95,3 +157,4 @@ fn test_fallthrough_verification() {
         "Heartbeat delta violation in fallback mode must trigger isolation state"
     );
 }
+
