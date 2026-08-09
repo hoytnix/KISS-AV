@@ -13,10 +13,12 @@ mod platform {
     use windows_sys::Win32::Foundation::{LPARAM, TRUE};
     use windows_sys::Win32::System::StationsAndDesktops::{
         EnumDesktopsW, EnumWindowStationsW, GetProcessWindowStation, OpenWindowStationW,
-        WINSTA_ENUMERATE,
     };
     use windows_sys::Win32::System::SystemInformation::GetTickCount64;
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
+
+    // Constant for WINSTA_ENUMDESKTOPS (0x0001) to enumerate desktops on a window station
+    const DESKTOP_ENUMERATE_ACCESS: u32 = 1;
 
     unsafe extern "system" fn enum_desktop_proc(lpsz_desktop: *const u16, lparam: LPARAM) -> i32 {
         if !lpsz_desktop.is_null() {
@@ -37,7 +39,7 @@ mod platform {
 
     unsafe extern "system" fn enum_winsta_proc(lpsz_winsta: *const u16, lparam: LPARAM) -> i32 {
         if !lpsz_winsta.is_null() {
-            let hwinsta = OpenWindowStationW(lpsz_winsta, 0, WINSTA_ENUMERATE);
+            let hwinsta = OpenWindowStationW(lpsz_winsta, 0, DESKTOP_ENUMERATE_ACCESS);
             if !hwinsta.is_null() {
                 EnumDesktopsW(hwinsta, Some(enum_desktop_proc), lparam);
             }
@@ -250,7 +252,7 @@ mod platform {
 // MAIN CORE ENGINE
 // =========================================================================
 fn main() {
-    // Daemon startup - running silently without standard out output
+    // Daemon startup - running silently without console output
     let is_afk = Arc::new(AtomicBool::new(false));
 
     // AFK Mode Toggle Simulation (Triggers after 10 seconds)
