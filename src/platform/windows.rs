@@ -8,13 +8,13 @@ use std::thread;
 use std::time::Instant;
 
 use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
-use windows_sys::Win32::Security::{GetTokenInformation, OpenProcessToken, TokenElevation, TOKEN_QUERY};
+use windows_sys::Win32::Security::{GetTokenInformation, TokenElevation, TOKEN_QUERY};
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows_sys::Win32::System::StationsAndDesktops::{
     EnumDesktopsW, EnumWindowStationsW, GetProcessWindowStation, OpenWindowStationW,
 };
 use windows_sys::Win32::System::SystemInformation::GetTickCount64;
-use windows_sys::Win32::System::Threading::GetCurrentProcess;
+use windows_sys::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
 use windows_sys::Win32::UI::Input::{
     GetRawInputDeviceList, RAWINPUTDEVICELIST, RIM_TYPEHID, RIM_TYPEKEYBOARD, RIM_TYPEMOUSE,
@@ -26,10 +26,11 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CallNextHookEx, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyMenu,
     DispatchMessageW, GetCursorPos, GetMessageW, LoadIconW, RegisterClassW, SetForegroundWindow,
     SetWindowsHookExW, TrackPopupMenu, TranslateMessage, UnhookWindowsHookEx, HHOOK, KBDLLHOOKSTRUCT,
-    MSLLHOOKSTRUCT, WH_KEYBOARD_LL, WH_MOUSE_LL, WM_TRAYICON,
+    MSLLHOOKSTRUCT, WH_KEYBOARD_LL, WH_MOUSE_LL,
     IDI_APPLICATION, MF_STRING, TPM_RIGHTBUTTON, WM_USER, WNDCLASSW,
 };
 
+const WM_TRAYICON: u32 = WM_USER + 1;
 const DESKTOP_ENUMERATE_ACCESS: u32 = 1;
 const LLKHF_INJECTED: u32 = 0x10;
 const LLMHF_INJECTED: u32 = 0x01;
@@ -74,7 +75,7 @@ pub fn check_hook_permissions() -> PermissionStatus {
 }
 
 unsafe extern "system" fn low_level_keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    if code >= 0 && !lparam.is_null() {
+    if code >= 0 && lparam != 0 {
         let kbd_struct = *(lparam as *const KBDLLHOOKSTRUCT);
         let is_injected = (kbd_struct.flags & LLKHF_INJECTED) != 0;
 
@@ -97,7 +98,7 @@ unsafe extern "system" fn low_level_keyboard_proc(code: i32, wparam: WPARAM, lpa
 }
 
 unsafe extern "system" fn low_level_mouse_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    if code >= 0 && !lparam.is_null() {
+    if code >= 0 && lparam != 0 {
         let mouse_struct = *(lparam as *const MSLLHOOKSTRUCT);
         let is_injected = (mouse_struct.flags & LLMHF_INJECTED) != 0
             || (mouse_struct.flags & LLMHF_LOWER_IL_INJECTED) != 0;
