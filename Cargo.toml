@@ -18,6 +18,8 @@ path = "src/main.rs"
 cfg-if = "1.0"
 goldberg = "*"
 libc = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
 
 # Target-specific dependencies
 [target.'cfg(windows)'.dependencies.windows-sys]
