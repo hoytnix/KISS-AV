@@ -49,6 +49,36 @@ When an anomaly is detected, KISS AV triggers a native network killswitch, insta
 - **X11 Unix Socket Scanning:** Audits `/tmp/.X11-unix/` for secondary display index sockets (e.g., `:1`, `:99`).
 - **DBus Remote Desktop Auditing:** Queries DBus for active `RemoteDesktop` and `ScreenCast` portal sessions (`org.freedesktop.portal.Desktop`).
 
+### 4. Robust TOML Allowlisting (`~/.kiss/config`)
+- Loads configuration strictly from `$HOME/.kiss/config` on startup.
+- Gracefully falls back to default empty settings if the file does not exist or fails to parse, preventing service disruption.
+- Supports allowlisting for X11 displays, virtual input drivers, and remote desktop processes.
+- Outputs clear exemption logs to standard output when an anomaly is bypassed via configuration rules:
+  ```text
+  [CONFIG EXEMPTION] Allowed X11 display 'X20' via ~/.kiss/config
+  [CONFIG EXEMPTION] Allowed virtual driver 'VirtualPS/2 VMware VMMouse' via ~/.kiss/config
+  ```
+
+---
+
+## Configuration (`~/.kiss/config`)
+
+KISS-AV can be customized using a TOML configuration file located strictly at `~/.kiss/config` (evaluating `$HOME/.kiss/config`).
+
+### Example Configuration:
+
+```toml
+[allowlist]
+allowed_x11_displays = ["X20", "X21"]
+allowed_virtual_drivers = ["VirtualPS/2 VMware VMMouse"]
+allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"]
+```
+
+### Allowlist Fields:
+- **`allowed_x11_displays`**: List of secondary X11 displays to permit without triggering network isolation.
+- **`allowed_virtual_drivers`**: List of virtual software input drivers to allow.
+- **`allowed_processes`**: List of remote desktop or screen capture process paths/executables to exempt.
+
 ---
 
 ## Project Architecture
@@ -57,6 +87,7 @@ When an anomaly is detected, KISS AV triggers a native network killswitch, insta
 src/
 ├── main.rs                 # Core service entry point & protection loop
 ├── lib.rs                  # Module re-export library
+├── config.rs               # Strongly typed TOML configuration parsing & allowlisting (~/.kiss/config)
 ├── engine/
 │   ├── mod.rs              # Engine aggregator module
 │   ├── detector.rs         # Core detection aggregator & isolation trigger
@@ -73,7 +104,7 @@ src/
 
 ## Verification & Automated Testing
 
-KISS-AV includes automated verification tests covering synthetic input injection, hidden desktop detection, and permission revocation fallthrough:
+KISS-AV includes automated verification tests covering synthetic input injection, hidden desktop detection, configuration parsing, allowlisting exemptions, and permission revocation fallthrough:
 
 ```bash
 # Run all automated verification tests
@@ -81,9 +112,10 @@ cargo test
 ```
 
 ### Verification Scenarios Tested:
-1. **Synthetic Input Verification:** Confirms that synthetic injection events trigger immediate network isolation when physical hardware is idle.
-2. **Desktop Isolation Verification:** Confirms immediate detection of non-standard hidden desktops and isolation trigger.
-3. **Fallthrough Verification:** Simulates revocation of hook permissions and confirms seamless transition to Heartbeat Delta Analysis mode without service interruption.
+1. **Configuration Parsing & Exemption Verification:** Verifies full and partial TOML config parsing, graceful fallback on missing/invalid files, predicate matching, and DetectorEngine exemption bypassing.
+2. **Synthetic Input Verification:** Confirms that synthetic injection events trigger immediate network isolation when physical hardware is idle.
+3. **Desktop Isolation Verification:** Confirms immediate detection of non-standard hidden desktops and isolation trigger.
+4. **Fallthrough Verification:** Simulates revocation of hook permissions and confirms seamless transition to Heartbeat Delta Analysis mode without service interruption.
 
 ---
 
