@@ -1,6 +1,6 @@
 [package]
 name = "kiss-daemon"
-version = "1.2.5"
+version = "1.2.6"
 edition = "2021"
 description = "KISS Security Daemon"
 authors = ["Michael Hoyt"]
@@ -23,6 +23,7 @@ features = [
     "Win32_UI_WindowsAndMessaging",
     "Win32_System_StationsAndDesktops",
     "Win32_System_SystemInformation",
+    "Win32_System_LibraryLoader",
     "Win32_UI_Shell",
     "Win32_Graphics_Gdi",
 ]

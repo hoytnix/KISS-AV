@@ -1,11 +1,11 @@
 # Keep It Simple Stupid Antivirus
 
-## KISS AV v1.2.5
+## KISS AV v1.2.6
 
 ### Downloads
-* **[Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.5/kiss-daemon_1.2.5_x64-setup.exe)**
-* **[macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.5/KissDaemon_1.2.5_aarch64.dmg)**
-* **[Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.5/kiss-daemon_1.2.5_amd64.deb)**
+* **[Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.6/kiss-daemon_1.2.6_x64-setup.exe)**
+* **[macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.6/KissDaemon_1.2.6_aarch64.dmg)**
+* **[Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.6/kiss-daemon_1.2.6_amd64.deb)**
 
 Are you deploying unattended machines or sensitive workstations, only to worry about hidden remote access Trojans (RATs), unauthorized local input, or stealthy hVNC sessions? 
 

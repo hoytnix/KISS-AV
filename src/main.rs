@@ -13,6 +13,7 @@ mod platform {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
     use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+    use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
     use windows_sys::Win32::System::StationsAndDesktops::{
         EnumDesktopsW, EnumWindowStationsW, GetProcessWindowStation, OpenWindowStationW,
     };
@@ -23,7 +24,7 @@ mod platform {
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         AppendMenuW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyMenu, GetCursorPos,
-        GetModuleHandleW, LoadIconW, RegisterClassW, SetForegroundWindow, TrackPopupMenu,
+        LoadIconW, RegisterClassW, SetForegroundWindow, TrackPopupMenu,
         IDI_APPLICATION, MF_STRING, TPM_RIGHTBUTTON, WM_USER, WNDCLASSW,
     };
 
@@ -177,9 +178,9 @@ mod platform {
                 cbClsExtra: 0,
                 cbWndExtra: 0,
                 hInstance: hinstance,
-                hIcon: LoadIconW(0, IDI_APPLICATION),
-                hCursor: 0,
-                hbrBackground: 0,
+                hIcon: LoadIconW(std::ptr::null_mut(), IDI_APPLICATION),
+                hCursor: std::ptr::null_mut(),
+                hbrBackground: std::ptr::null_mut(),
                 lpszMenuName: std::ptr::null(),
                 lpszClassName: class_name.as_ptr(),
             };
@@ -195,8 +196,8 @@ mod platform {
                 0,
                 0,
                 0,
-                0,
-                0,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
                 hinstance,
                 std::ptr::null(),
             );
@@ -207,7 +208,7 @@ mod platform {
             nid.uID = 1;
             nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
             nid.uCallbackMessage = WM_TRAYICON;
-            nid.hIcon = LoadIconW(0, IDI_APPLICATION);
+            nid.hIcon = LoadIconW(std::ptr::null_mut(), IDI_APPLICATION);
 
             let tip: Vec<u16> = "KISS AV Security Daemon\0".encode_utf16().collect();
             for (i, &ch) in tip.iter().enumerate().take(128) {
@@ -217,7 +218,7 @@ mod platform {
             Shell_NotifyIconW(NIM_ADD, &nid);
 
             let mut msg = std::mem::zeroed();
-            while windows_sys::Win32::UI::WindowsAndMessaging::GetMessageW(&mut msg, 0, 0, 0) > 0 {
+            while windows_sys::Win32::UI::WindowsAndMessaging::GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) > 0 {
                 windows_sys::Win32::UI::WindowsAndMessaging::TranslateMessage(&msg);
                 windows_sys::Win32::UI::WindowsAndMessaging::DispatchMessageW(&msg);
             }
