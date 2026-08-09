@@ -1,9 +1,9 @@
 [package]
 name = "kiss-daemon"
-version = "1.2.8"
+version = "1.2.9"
 edition = "2021"
-description = "KISS Security Daemon"
-authors = ["Michael Hoyt"]
+description = "Keep It Simple Stupid Antivirus"
+authors = ["Michael Scott Hoyt (tehwiz.com)"]
 
 [[bin]]
 name = "kiss-daemon"
@@ -38,7 +38,7 @@ strip = true
 [package.metadata.packager]
 before-packaging-command = "cargo build --release"
 product-name = "KissDaemon"
-identifier = "com.kiss.daemon"
+identifier = "kissav.tehwiz.com"
 formats = ["deb", "nsis", "dmg"]
 
 [[package.metadata.packager.binaries]]

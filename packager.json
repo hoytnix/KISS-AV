@@ -1,8 +1,8 @@
 {
   "productName": "KissDaemon",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "identifier": "com.kiss.daemon",
-  "description": "KISS Security Daemon",
+  "description": "Keep It Simple Stupid Antivirus",
   "authors": ["Michael Hoyt"],
   "formats": ["deb", "nsis", "dmg"],
   "binaries": [

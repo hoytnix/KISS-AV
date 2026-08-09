@@ -67,15 +67,18 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      # Step 3: Upload generated installers as artifacts (fixed search paths)
+      # Step 3: Upload generated installers as artifacts (targeting built package files specifically)
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: installer-${{ matrix.target }}-${{ matrix.format }}
           path: |
-            target/**/*.deb
-            target/**/*.exe
-            target/**/*.dmg
+            target/**/release/*.deb
+            target/**/release/*.exe
+            target/**/release/*.dmg
+            target/release/*.deb
+            target/release/*.exe
+            target/release/*.dmg
           if-no-files-found: error
 
   publish-release:
