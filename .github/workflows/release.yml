@@ -67,18 +67,18 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      # Step 3: Upload generated installers as artifacts (targeting built package files specifically)
+      # Step 3: Upload ONLY the generated installer files (.deb, .exe, .dmg) from packager/
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: installer-${{ matrix.target }}-${{ matrix.format }}
           path: |
-            target/**/release/*.deb
-            target/**/release/*setup.exe
-            target/**/release/*.dmg
-            target/release/*.deb
-            target/release/*setup.exe
-            target/release/*.dmg
+            target/**/packager/*.deb
+            target/**/packager/*.exe
+            target/**/packager/*.dmg
+            target/packager/*.deb
+            target/packager/*.exe
+            target/packager/*.dmg
           if-no-files-found: error
 
   publish-release:
@@ -89,7 +89,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download all build artifacts
+      - name: Download all build artifacts into flat folder
         uses: actions/download-artifact@v4
         with:
           path: release-assets
@@ -99,9 +99,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: |
-            release-assets/*.deb
-            release-assets/*setup.exe
-            release-assets/*.dmg
+          files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
