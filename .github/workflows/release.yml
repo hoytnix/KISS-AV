@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-and-package:
-    name: Package on ${{ matrix.os }} (${{ matrix.target || 'native' }})
+    name: Package on ${{ matrix.os }} (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -42,7 +42,7 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      # Install cross-linker required for Linux ARM64 builds on x86_64 runners
+      # Cross-compilation tools for Linux ARM64 on x86_64 Ubuntu runner
       - name: Install ARM64 GCC Linker (Linux)
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
@@ -55,8 +55,14 @@ jobs:
       - name: Install cargo-packager
         run: cargo binstall cargo-packager --no-confirm
 
-      # Compile and package for the target matrix entry
-      - name: Build and package installer
+      # Step 1: Pre-compile binary directly to target path
+      - name: Compile Rust binary
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+
+      # Step 2: Package using pre-built binary
+      - name: Generate Installer
         run: cargo packager --release --target ${{ matrix.target }} -f ${{ matrix.format }}
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
