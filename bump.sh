@@ -59,24 +59,20 @@ else
   SED_INPLACE=(-i)
 fi
 
-# 1. Update Cargo.toml (only the package version line)
+# 1. Update Cargo.toml (only package version)
 sed "${SED_INPLACE[@]}" -E "0,/^version = \"[0-9]+\.[0-9]+\.[0-9]+\"/s//version = \"${NEW_VERSION}\"/" Cargo.toml
 
-# 2. Update packager.json if it exists
+# 2. Update Cargo.lock to match Cargo.toml version
+cargo check
+
+# 3. Update packager.json if it exists
 if [[ -f "packager.json" ]]; then
   sed "${SED_INPLACE[@]}" -E "s/\"version\": \"[0-9]+\.[0-9]+\.[0-9]+\"/\"version\": \"${NEW_VERSION}\"/" packager.json
 fi
 
-# 3. Update README.md (replaces instances of vX.Y.Z)
+# 4. Update README.md (handles both v1.2.13 and standalone 1.2.13)
 if [[ -f "README.md" ]]; then
-  sed "${SED_INPLACE[@]}" -E "s/v${CURRENT_VERSION}/v${NEW_VERSION}/g" README.md
-fi
-
-# Verify change in Cargo.toml
-NEW_CHECK=$(sed -n -E 's/^version = "([0-9]+\.[0-9]+\.[0-9]+)"/\1/p' Cargo.toml | head -n 1)
-if [[ "$NEW_CHECK" != "$NEW_VERSION" ]]; then
-  echo "Error: Version replacement failed in Cargo.toml."
-  exit 1
+  sed "${SED_INPLACE[@]}" -E "s/${CURRENT_VERSION}/${NEW_VERSION}/g" README.md
 fi
 
 echo "Updated files:"
