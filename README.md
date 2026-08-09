@@ -6,6 +6,7 @@
 * **[Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v2.0.1/kiss-daemon_2.0.1_x64-setup.exe)**
 * **[macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v2.0.1/KissDaemon_2.0.1_aarch64.dmg)**
 * **[Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v2.0.1/kiss-daemon_2.0.1_amd64.deb)**
+* **[Linux arm64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v2.0.1/kiss-daemon_2.0.1_arm64.deb)**
 
 ---
 
