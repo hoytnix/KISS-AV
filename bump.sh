@@ -62,15 +62,12 @@ fi
 # 1. Update Cargo.toml (only package version)
 sed "${SED_INPLACE[@]}" -E "0,/^version = \"[0-9]+\.[0-9]+\.[0-9]+\"/s//version = \"${NEW_VERSION}\"/" Cargo.toml
 
-# 2. Update Cargo.lock to match Cargo.toml version
-cargo check
-
-# 3. Update packager.json if it exists
+# 2. Update packager.json if it exists
 if [[ -f "packager.json" ]]; then
   sed "${SED_INPLACE[@]}" -E "s/\"version\": \"[0-9]+\.[0-9]+\.[0-9]+\"/\"version\": \"${NEW_VERSION}\"/" packager.json
 fi
 
-# 4. Update README.md (handles both v1.2.13 and standalone 1.2.13)
+# 3. Update README.md (handles both v1.2.13 and standalone 1.2.13)
 if [[ -f "README.md" ]]; then
   sed "${SED_INPLACE[@]}" -E "s/${CURRENT_VERSION}/${NEW_VERSION}/g" README.md
 fi
