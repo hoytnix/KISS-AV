@@ -1,64 +1,109 @@
-# Keep It Simple Stupid Antivirus
+# Keep It Simple Stupid Antivirus (KISS-AV)
 
-## KISS AV v1.3.2
+## KISS AV v1.3.2 Enterprise Edition
 
 ### Downloads
 * **[Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v1.3.2/kiss-daemon_1.3.2_x64-setup.exe)**
 * **[macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v1.3.2/KissDaemon_1.3.2_aarch64.dmg)**
 * **[Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v1.3.2/kiss-daemon_1.3.2_amd64.deb)**
 
-Are you deploying unattended machines or sensitive workstations, only to worry about hidden remote access Trojans (RATs), unauthorized local input, or stealthy hVNC sessions? 
+---
 
-Standard security tools often leave their strings and detection logic exposed in plaintext. A basic disassembler is all an attacker needs to find your detection routines, patch them out, and bypass your alarms—leaving your system completely vulnerable to secondary desktop sessions (VNC/RDP) or spoofed hardware inputs.
+### Enterprise-Grade Security Engine
 
-Enter **KISS AV**. 
+**KISS AV** is a thread-safe, obfuscated, cross-platform security daemon built in Rust. It actively detects hidden remote desktop sessions (HVNC, VNC, RDP), synthetic input injections, unauthorized hardware drivers, and background screen-scraping attempts while workstations are idle or locked.
 
-This is a fully standalone, thread-safe, obfuscated, cross-platform security engine built in Rust. It actively sweeps for hidden virtual desktops, unauthorized network sockets, and hardware interrupts while your system is designated as Away From Keyboard (AFK). When an anomaly is detected, it doesn't just write a log entry—it immediately triggers a localized network killswitch, neutralizing remote threats before data exfiltration can occur. 
-
-Best of all, your core logic is shielded by macro-level control-flow obfuscation and string encryption via the `goldberg` crate, making reverse engineering a nightmare for bad actors.
-
-## Core Features
-
-*   **Zero-Dependency Native Installers:** Built with `cargo-packager` to distribute standalone binaries (.msi, .dmg, .deb) that require no pre-installed runtimes.
-*   **Military-Grade Code Obfuscation:** Uses procedural macros to encrypt strings and mangle the control flow of the execution loop at compile-time.
-*   **Multi-Station & Socket Inspection:** Traverses all active Windows WindowStations via safe context pointers, inspects `/proc/net/tcp` for active VNC listening ports (5800–5999), and flags unauthorized screen-sharing daemons.
-*   **Cross-Compositor AFK Monitoring:** Queries low-level OS APIs and fallback pipelines (`GetLastInputInfo`, GNOME D-Bus `IdleMonitor`, `xprintidle`, and `IOHIDSystem`) to detect physical or synthetic hardware activity during locked states across modern desktop environments (X11, Wayland, macOS, Win32).
-*   **Thread-Safe Architecture:** Eliminates global mutable state in favor of isolated context pointers and thread-local memory passing.
-*   **Instant Network Isolation:** Executes a hard shutdown of Wi-Fi and Ethernet interfaces via native system commands (`netsh`, `nmcli`/`rfkill`, `networksetup`/`pfctl`) the millisecond a breach is confirmed.
+When an anomaly is detected, KISS AV triggers a native network killswitch, instantly disabling Wi-Fi and Ethernet interfaces to prevent data exfiltration.
 
 ---
 
-## Contributing
+## Key Enterprise Features
 
-Secure your endpoints today. Follow the instructions below to generate native installers for your operating system in a single command.
+### 1. Delta-Based Heartbeat Engine
+- Tracks elapsed time since the last verified physical hardware input event.
+- If physical hardware input registers zero for 15+ seconds while background processes execute active framebuffer captures or outbound socket connections, the engine flags the target process and triggers network isolation.
 
-### Prerequisites
+### 2. Isolation Trigger & Seamless Fallback Architecture
+- Aggregates real-time detection events across OS platform sensors.
+- **Graceful Hook Fallbacks:** If OS permissions are denied (e.g. macOS Accessibility API blocked or un-privileged Linux Wayland sessions), the daemon automatically falls back to Delta-Based Heartbeat Analysis without crashing the service.
+- Logs comprehensive violation metadata including target PIDs, desktop identifiers, event flags, and timestamps.
 
-Ensure you have the Rust toolchain installed.
+### 3. OS Platform Sensor Architecture
 
-```bash
-# Install the cross-platform packager
-cargo install cargo-packager
+#### Windows Architecture (`src/platform/windows.rs`)
+- **Token Elevation Verification:** Checks current process token elevation (`OpenProcessToken` / `GetTokenInformation`).
+- **Win32 Message Pump Isolation:** Low-level keyboard and mouse hooks (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`) run on an isolated, dedicated thread with an explicit Win32 message pump (`GetMessageW` / `DispatchMessageW`) to prevent UI freezes under heavy system load.
+- **Injection Flag Inspection:** Inspects `KBDLLHOOKSTRUCT` (`LLKHF_INJECTED`) and `MSLLHOOKSTRUCT` (`LLMHF_INJECTED`) for synthetic injection flags.
+- **Raw Input Device Audit:** Cross-references input events against raw hardware device lists (`GetRawInputDeviceList`) to distinguish physical USB/Bluetooth drivers from virtual software input drivers.
+- **Desktop Enumeration:** Traverses window stations (`EnumWindowStationsW` / `EnumDesktopsW`), excluding standard defaults (`Default`, `Winlogon`, `Disconnect`, `Screen-saver`) to detect hidden HVNC desktops.
+
+#### macOS Architecture (`src/platform/macos.rs`)
+- **Accessibility Trust Checks:** Queries process trust permissions (`AXIsProcessTrusted`). Prompts for permissions gracefully when denied and routes monitoring through the fallback engine.
+- **SkyLight Display Spaces Audit:** Audits active desktop display spaces to catch hidden or secondary display spaces.
+- **Event Tap Inspection:** Initializes `CGEventTap` to monitor incoming mouse/keyboard events, verifying target PIDs (`kCGEventTargetUnixProcessID`) and synthetic user data flags.
+
+#### Linux Architecture (`src/platform/linux.rs`)
+- **Input Device & Sysfs Audit:** Reads `/sys/class/input` and `/proc/bus/input/devices`, parsing vendor/product IDs, device names, and bus types (e.g. `BUS_USB`, `BUS_BLUETOOTH` vs `BUS_VIRTUAL` / `uinput`) to flag virtual input drivers.
+- **X11 Unix Socket Scanning:** Audits `/tmp/.X11-unix/` for secondary display index sockets (e.g., `:1`, `:99`).
+- **DBus Remote Desktop Auditing:** Queries DBus for active `RemoteDesktop` and `ScreenCast` portal sessions (`org.freedesktop.portal.Desktop`).
+
+---
+
+## Project Architecture
+
+```
+src/
+├── main.rs                 # Core service entry point & protection loop
+├── lib.rs                  # Module re-export library
+├── engine/
+│   ├── mod.rs              # Engine aggregator module
+│   ├── detector.rs         # Core detection aggregator & isolation trigger
+│   ├── fallback.rs         # OS hook fallback manager
+│   └── heartbeat.rs        # Delta-based physical input heartbeat engine
+└── platform/
+    ├── mod.rs              # Platform abstraction layer & types
+    ├── windows.rs          # Win32 elevated hooks, raw input, message pump thread
+    ├── macos.rs            # macOS Accessibility check, SkyLight audit, CGEventTap
+    └── linux.rs            # Linux sysfs input audit, X11 sockets, DBus portal check
 ```
 
-### Building the Installers
+---
 
-To compile the daemon with full obfuscation optimizations and generate the installation packages, simply run:
+## Verification & Automated Testing
 
+KISS-AV includes automated verification tests covering synthetic input injection, hidden desktop detection, and permission revocation fallthrough:
+
+```bash
+# Run all automated verification tests
+cargo test
+```
+
+### Verification Scenarios Tested:
+1. **Synthetic Input Verification:** Confirms that synthetic injection events trigger immediate network isolation when physical hardware is idle.
+2. **Desktop Isolation Verification:** Confirms immediate detection of non-standard hidden desktops and isolation trigger.
+3. **Fallthrough Verification:** Simulates revocation of hook permissions and confirms seamless transition to Heartbeat Delta Analysis mode without service interruption.
+
+---
+
+## Building & Packaging
+
+### Prerequisites
+- Rust toolchain installed.
+- `cargo-packager` installed:
+  ```bash
+  cargo install cargo-packager
+  ```
+
+### Build Command
+To compile the release binary and generate native installers (.exe, .dmg, .deb):
 ```bash
 cargo packager --release
 ```
 
-Once the build process is complete, navigate to the `target/release/` directory. You will find your production-ready, highly secure installers ready for deployment across Windows, macOS, or Linux.
+Output installers will be placed in `target/release/`.
 
-## Architecture Overview
-
-KISS Security Daemon leverages conditional compilation (`#[cfg(target_os = "...")]`) to interact seamlessly with platform-specific APIs:
-
-*   **Windows:** Traverses all system WindowStations using `EnumWindowStationsW` and `EnumDesktopsW` with thread-safe `LPARAM` state passing to catch hidden hVNC sessions, while monitoring idle state via `GetLastInputInfo`.
-*   **Linux:** Dual-engine detection targeting both X11 and Wayland compositors. Combines `/proc` process command-line sweeps, socket port binding inspection (5800–5999), and GNOME Mutter `IdleMonitor` D-Bus fallbacks with `rfkill`/`nmcli` killswitch execution.
-*   **macOS:** Monitors `screensharingd` instances, inspects network bindings for default VNC ports via `lsof`, and queries `IOHIDSystem` for hardware idle times, isolating interfaces via `networksetup` and `pfctl`.
+---
 
 ## License
 
-This project is licensed under standard open-source terms. See the LICENSE file for details.
+This project is licensed under standard open-source terms. See the [LICENSE](LICENSE) file for details.
