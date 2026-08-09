@@ -1,19 +1,19 @@
 # Keep It Simple Stupid Antivirus
 
-## KISS AV v1.2.0
+## KISS AV v1.2.1
 
 ### Downloads
-* **[Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.0/kiss-daemon_1.2.0_x64-setup.exe)**
-* **[macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.0/KissDaemon_1.2.0_aarch64.dmg)**
-* **[Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.0/kiss-daemon_1.2.0_amd64.deb)**
+* **[Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.1/kiss-daemon_1.2.1_x64-setup.exe)**
+* **[macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.1/KissDaemon_1.2.1_aarch64.dmg)**
+* **[Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v1.2.1/kiss-daemon_1.2.1_amd64.deb)**
 
-Are you deploying unattended machines or sensitive workstations, only to worry about hidden remote access Trojans (RATs) or unauthorized local input? 
+Are you deploying unattended machines or sensitive workstations, only to worry about hidden remote access Trojans (RATs), unauthorized local input, or stealthy hVNC sessions? 
 
 Standard security tools often leave their strings and detection logic exposed in plaintext. A basic disassembler is all an attacker needs to find your detection routines, patch them out, and bypass your alarms—leaving your system completely vulnerable to secondary desktop sessions (VNC/RDP) or spoofed hardware inputs.
 
 Enter **KISS AV**. 
 
-This is a fully standalone, obfuscated, cross-platform security engine built in Rust. It actively sweeps for hidden virtual desktops and unauthorized hardware interrupts while your system is designated as Away From Keyboard (AFK). When an anomaly is detected, it doesn't just write a log entry—it immediately triggers a localized network killswitch, neutralizing remote threats before data exfiltration can occur. 
+This is a fully standalone, thread-safe, obfuscated, cross-platform security engine built in Rust. It actively sweeps for hidden virtual desktops, unauthorized network sockets, and hardware interrupts while your system is designated as Away From Keyboard (AFK). When an anomaly is detected, it doesn't just write a log entry—it immediately triggers a localized network killswitch, neutralizing remote threats before data exfiltration can occur. 
 
 Best of all, your core logic is shielded by macro-level control-flow obfuscation and string encryption via the `goldberg` crate, making reverse engineering a nightmare for bad actors.
 
@@ -21,9 +21,10 @@ Best of all, your core logic is shielded by macro-level control-flow obfuscation
 
 *   **Zero-Dependency Native Installers:** Built with `cargo-packager` to distribute standalone binaries (.msi, .dmg, .deb) that require no pre-installed runtimes.
 *   **Military-Grade Code Obfuscation:** Uses procedural macros to encrypt strings and mangle the control flow of the execution loop at compile-time.
-*   **Hidden Desktop Detection:** Scans for unauthorized window stations, secondary X11/VNC servers, and hidden screen-sharing daemons.
-*   **AFK Hardware Monitoring:** Queries low-level OS APIs (LASTINPUTINFO, xprintidle, IOHIDSystem) to ensure no physical or spoofed hardware inputs occur while the system is locked.
-*   **Instant Network Isolation:** Executes a hard shutdown of Wi-Fi and Ethernet interfaces via native system commands (`netsh`, `nmcli`, `networksetup`) the millisecond a breach is confirmed.
+*   **Multi-Station & Socket Inspection:** Traverses all active Windows WindowStations via safe context pointers, inspects `/proc/net/tcp` for active VNC listening ports (5800–5999), and flags unauthorized screen-sharing daemons.
+*   **Cross-Compositor AFK Monitoring:** Queries low-level OS APIs and fallback pipelines (`GetLastInputInfo`, GNOME D-Bus `IdleMonitor`, `xprintidle`, and `IOHIDSystem`) to detect physical or synthetic hardware activity during locked states across modern desktop environments (X11, Wayland, macOS, Win32).
+*   **Thread-Safe Architecture:** Eliminates global mutable state in favor of isolated context pointers and thread-local memory passing.
+*   **Instant Network Isolation:** Executes a hard shutdown of Wi-Fi and Ethernet interfaces via native system commands (`netsh`, `nmcli`/`rfkill`, `networksetup`/`pfctl`) the millisecond a breach is confirmed.
 
 ---
 
@@ -54,9 +55,9 @@ Once the build process is complete, navigate to the `target/release/` directory.
 
 KISS Security Daemon leverages conditional compilation (`#[cfg(target_os = "...")]`) to interact seamlessly with platform-specific APIs:
 
-*   **Windows:** Interacts with `Win32::System::StationsAndDesktops` and `Win32::UI::Input` to monitor hidden window stations.
-*   **Linux:** Parses `/proc` for hidden virtual framebuffers (Xvfb, VNC) and hooks into `xprintidle` / `rfkill`.
-*   **macOS:** Monitors `screensharingd` instances and queries `IOHIDSystem` for true hardware idle times, isolating via `pfctl` and `networksetup`.
+*   **Windows:** Traverses all system WindowStations using `EnumWindowStationsW` and `EnumDesktopsW` with thread-safe `LPARAM` state passing to catch hidden hVNC sessions, while monitoring idle state via `GetLastInputInfo`.
+*   **Linux:** Dual-engine detection targeting both X11 and Wayland compositors. Combines `/proc` process command-line sweeps, socket port binding inspection (5800–5999), and GNOME Mutter `IdleMonitor` D-Bus fallbacks with `rfkill`/`nmcli` killswitch execution.
+*   **macOS:** Monitors `screensharingd` instances, inspects network bindings for default VNC ports via `lsof`, and queries `IOHIDSystem` for hardware idle times, isolating interfaces via `networksetup` and `pfctl`.
 
 ## License
 
