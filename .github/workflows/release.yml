@@ -61,17 +61,46 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      # Step 2: Package using pre-built binary
+      # Step 2: Package installer using pre-built binary
       - name: Generate Installer
         run: cargo packager --release --target ${{ matrix.target }} -f ${{ matrix.format }}
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      - name: Publish to GitHub Releases
+      # Step 3: Save generated installers as workflow artifacts
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.target }}-${{ matrix.format }}
+          path: |
+            target/**/packager/**/*.deb
+            target/**/packager/**/*.exe
+            target/**/packager/**/*.dmg
+            target/packager/**/*.deb
+            target/packager/**/*.exe
+            target/packager/**/*.dmg
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: build-and-package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Publish Assets to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
           files: |
-            target/release/packager/*
-            target/${{ matrix.target }}/release/packager/*
+            release-assets/**/*.deb
+            release-assets/**/*.exe
+            release-assets/**/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
