@@ -10,19 +10,44 @@ permissions:
 
 jobs:
   build-and-package:
-    name: Package on ${{ matrix.os }}
+    name: Package on ${{ matrix.os }} (${{ matrix.target || 'native' }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          # Linux x86_64 (amd64)
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            format: deb
+          # Linux ARM64 (arm64)
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            format: deb
+          # Windows x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            format: nsis
+          # macOS Apple Silicon (aarch64)
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            format: dmg
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install stable Rust toolchain
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      # Install cross-linker required for Linux ARM64 builds on x86_64 runners
+      - name: Install ARM64 GCC Linker (Linux)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
@@ -30,31 +55,17 @@ jobs:
       - name: Install cargo-packager
         run: cargo binstall cargo-packager --no-confirm
 
-      - name: Compile the Rust binary
-        run: cargo build --release
-
-      # ---------------------------------------------------
-      # EXPLICIT OS-SPECIFIC PACKAGING COMMANDS
-      # ---------------------------------------------------
-      - name: Package for Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: cargo packager --release -f deb
-
-      - name: Package for Windows
-        if: matrix.os == 'windows-latest'
-        run: cargo packager --release -f nsis
-
-      - name: Package for macOS
-        if: matrix.os == 'macos-latest'
-        run: cargo packager --release -f dmg
-      # ---------------------------------------------------
+      # Compile and package for the target matrix entry
+      - name: Build and package installer
+        run: cargo packager --release --target ${{ matrix.target }} -f ${{ matrix.format }}
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            target/release/*.deb
-            target/release/*.exe
-            target/release/*.dmg
+            target/release/packager/*
+            target/${{ matrix.target }}/release/packager/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

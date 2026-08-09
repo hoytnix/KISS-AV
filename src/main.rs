@@ -10,15 +10,29 @@ use std::time::{Duration, Instant};
 mod platform {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt;
-    use windows_sys::Win32::Foundation::{LPARAM, TRUE};
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
     use windows_sys::Win32::System::StationsAndDesktops::{
         EnumDesktopsW, EnumWindowStationsW, GetProcessWindowStation, OpenWindowStationW,
     };
     use windows_sys::Win32::System::SystemInformation::GetTickCount64;
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
+    use windows_sys::Win32::UI::Shell::{
+        Shell_NotifyIconW, NOTIFYICONDATAW, NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD,
+    };
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        AppendMenuW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyMenu, GetCursorPos,
+        GetModuleHandleW, LoadIconW, RegisterClassW, SetForegroundWindow, TrackPopupMenu,
+        IDI_APPLICATION, MF_STRING, TPM_RIGHTBUTTON, WM_USER, WNDCLASSW,
+    };
 
-    // Constant for WINSTA_ENUMDESKTOPS (0x0001) to enumerate desktops on a window station
     const DESKTOP_ENUMERATE_ACCESS: u32 = 1;
+    const WM_TRAYICON: u32 = WM_USER + 1;
+    const IDM_TOGGLE_AFK: usize = 1001;
+    const IDM_EXIT: usize = 1002;
+
+    static mut IS_AFK_PTR: Option<Arc<AtomicBool>> = None;
 
     unsafe extern "system" fn enum_desktop_proc(lpsz_desktop: *const u16, lparam: LPARAM) -> i32 {
         if !lpsz_desktop.is_null() {
@@ -34,7 +48,7 @@ mod platform {
                 target_vec.push(desktop_name);
             }
         }
-        TRUE
+        1
     }
 
     unsafe extern "system" fn enum_winsta_proc(lpsz_winsta: *const u16, lparam: LPARAM) -> i32 {
@@ -44,7 +58,7 @@ mod platform {
                 EnumDesktopsW(hwinsta, Some(enum_desktop_proc), lparam);
             }
         }
-        TRUE
+        1
     }
 
     pub fn scan_for_hidden_desktops() -> Result<Vec<String>, String> {
@@ -52,13 +66,10 @@ mod platform {
         let lparam = &mut detected_desktops as *mut Vec<String> as LPARAM;
 
         unsafe {
-            // 1. Enumerate current process window station
             let win_station = GetProcessWindowStation();
             if !win_station.is_null() {
                 EnumDesktopsW(win_station, Some(enum_desktop_proc), lparam);
             }
-
-            // 2. Enumerate all window stations (catches hVNC / isolated services)
             EnumWindowStationsW(Some(enum_winsta_proc), lparam);
         }
 
@@ -99,6 +110,119 @@ mod platform {
             .args(["interface", "set", "interface", "Ethernet", "disable"])
             .status();
     }
+
+    unsafe extern "system" fn window_proc(
+        hwnd: HWND,
+        msg: u32,
+        _wparam: WPARAM,
+        lparam: LPARAM,
+    ) -> LRESULT {
+        if msg == WM_TRAYICON && (lparam as u32) == 0x0205 {
+            let menu = CreatePopupMenu();
+            let state_str = if let Some(ref afk) = IS_AFK_PTR {
+                if afk.load(Ordering::SeqCst) {
+                    "Disable AFK Mode\0"
+                } else {
+                    "Enable AFK Mode\0"
+                }
+            } else {
+                "Toggle AFK Mode\0"
+            };
+
+            let state_utf16: Vec<u16> = state_str.encode_utf16().collect();
+            let exit_utf16: Vec<u16> = "Exit\0".encode_utf16().collect();
+
+            AppendMenuW(menu, MF_STRING, IDM_TOGGLE_AFK, state_utf16.as_ptr());
+            AppendMenuW(menu, MF_STRING, IDM_EXIT, exit_utf16.as_ptr());
+
+            let mut pt = std::mem::zeroed();
+            GetCursorPos(&mut pt);
+            SetForegroundWindow(hwnd);
+
+            let cmd = TrackPopupMenu(
+                menu,
+                TPM_RIGHTBUTTON | 0x0100,
+                pt.x,
+                pt.y,
+                0,
+                hwnd,
+                std::ptr::null(),
+            );
+
+            DestroyMenu(menu);
+
+            if cmd as usize == IDM_TOGGLE_AFK {
+                if let Some(ref afk) = IS_AFK_PTR {
+                    let curr = afk.load(Ordering::SeqCst);
+                    afk.store(!curr, Ordering::SeqCst);
+                }
+            } else if cmd as usize == IDM_EXIT {
+                std::process::exit(0);
+            }
+            return 0;
+        }
+        DefWindowProcW(hwnd, msg, _wparam, lparam)
+    }
+
+    pub fn spawn_native_tray(is_afk: Arc<AtomicBool>) {
+        unsafe {
+            IS_AFK_PTR = Some(is_afk);
+
+            let hinstance = GetModuleHandleW(std::ptr::null());
+            let class_name: Vec<u16> = "KISS_Tray_Class\0".encode_utf16().collect();
+
+            let wnd_class = WNDCLASSW {
+                style: 0,
+                lpfnWndProc: Some(window_proc),
+                cbClsExtra: 0,
+                cbWndExtra: 0,
+                hInstance: hinstance,
+                hIcon: LoadIconW(0, IDI_APPLICATION),
+                hCursor: 0,
+                hbrBackground: 0,
+                lpszMenuName: std::ptr::null(),
+                lpszClassName: class_name.as_ptr(),
+            };
+
+            RegisterClassW(&wnd_class);
+
+            let hwnd = CreateWindowExW(
+                0,
+                class_name.as_ptr(),
+                class_name.as_ptr(),
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                hinstance,
+                std::ptr::null(),
+            );
+
+            let mut nid: NOTIFYICONDATAW = std::mem::zeroed();
+            nid.cbSize = std::mem::size_of::<NOTIFYICONDATAW>() as u32;
+            nid.hWnd = hwnd;
+            nid.uID = 1;
+            nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+            nid.uCallbackMessage = WM_TRAYICON;
+            nid.hIcon = LoadIconW(0, IDI_APPLICATION);
+
+            let tip: Vec<u16> = "KISS AV Security Daemon\0".encode_utf16().collect();
+            for (i, &ch) in tip.iter().enumerate().take(128) {
+                nid.szTip[i] = ch;
+            }
+
+            Shell_NotifyIconW(NIM_ADD, &nid);
+
+            let mut msg = std::mem::zeroed();
+            while windows_sys::Win32::UI::WindowsAndMessaging::GetMessageW(&mut msg, 0, 0, 0) > 0 {
+                windows_sys::Win32::UI::WindowsAndMessaging::TranslateMessage(&msg);
+                windows_sys::Win32::UI::WindowsAndMessaging::DispatchMessageW(&msg);
+            }
+        }
+    }
 }
 
 // =========================================================================
@@ -108,11 +232,12 @@ mod platform {
 mod platform {
     use std::fs;
     use std::process::Command;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
 
     pub fn scan_for_hidden_desktops() -> Result<Vec<String>, String> {
         let mut suspicious = Vec::new();
 
-        // 1. Process Command Line Checks
         if let Ok(entries) = fs::read_dir("/proc") {
             for entry in entries.flatten() {
                 let path = entry.path().join("cmdline");
@@ -124,7 +249,6 @@ mod platform {
             }
         }
 
-        // 2. Open TCP Socket Inspection for VNC Ports (5900-5999 & 5800-5899)
         for path in &["/proc/net/tcp", "/proc/net/tcp6"] {
             if let Ok(content) = fs::read_to_string(path) {
                 for line in content.lines().skip(1) {
@@ -146,7 +270,6 @@ mod platform {
     }
 
     pub fn get_system_idle_time_secs() -> u64 {
-        // Attempt X11 Query via xprintidle
         if let Ok(output) = Command::new("xprintidle").output() {
             if let Ok(s) = String::from_utf8(output.stdout) {
                 if let Ok(ms) = s.trim().parse::<u64>() {
@@ -155,7 +278,6 @@ mod platform {
             }
         }
 
-        // Fallback for Wayland via GNOME D-Bus IdleMonitor
         let dbus_output = Command::new("gdbus")
             .args([
                 "call",
@@ -188,6 +310,44 @@ mod platform {
         let _ = Command::new("rfkill").args(["block", "all"]).status();
         let _ = Command::new("nmcli").args(["networking", "off"]).status();
     }
+
+    pub fn spawn_native_tray(is_afk: Arc<AtomicBool>) {
+        let mut last_state = is_afk.load(Ordering::SeqCst);
+        loop {
+            let current_state = is_afk.load(Ordering::SeqCst);
+            if current_state != last_state {
+                let status_msg = if current_state {
+                    "KISS AV: AFK Guard Enabled"
+                } else {
+                    "KISS AV: AFK Guard Disabled"
+                };
+
+                let _ = Command::new("gdbus")
+                    .args([
+                        "call",
+                        "--session",
+                        "--dest",
+                        "org.freedesktop.Notifications",
+                        "--object-path",
+                        "/org/freedesktop/Notifications",
+                        "--method",
+                        "org.freedesktop.Notifications.Notify",
+                        "KISS AV",
+                        "0",
+                        "security-high",
+                        "KISS Security Daemon",
+                        status_msg,
+                        "[]",
+                        "{}",
+                        "3000",
+                    ])
+                    .status();
+
+                last_state = current_state;
+            }
+            std::thread::sleep(std::time::Duration::from_secs(2));
+        }
+    }
 }
 
 // =========================================================================
@@ -196,11 +356,12 @@ mod platform {
 #[cfg(target_os = "macos")]
 mod platform {
     use std::process::Command;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
 
     pub fn scan_for_hidden_desktops() -> Result<Vec<String>, String> {
         let mut suspicious = Vec::new();
 
-        // 1. Process checks for secondary screensharing engines
         let output = Command::new("pgrep").args(["-fl", "screensharingd"]).output();
         if let Ok(out) = output {
             let stdout = String::from_utf8_lossy(&out.stdout);
@@ -209,7 +370,6 @@ mod platform {
             }
         }
 
-        // 2. Network socket verification for VNC/RDP services
         let lsof_out = Command::new("lsof").args(["-i", ":5900"]).output();
         if let Ok(out) = lsof_out {
             let stdout = String::from_utf8_lossy(&out.stdout);
@@ -222,7 +382,6 @@ mod platform {
     }
 
     pub fn get_system_idle_time_secs() -> u64 {
-        // Query CoreGraphics HID idle time directly via ioreg
         let output = Command::new("ioreg")
             .args(["-c", "IOHIDSystem"])
             .output();
@@ -246,51 +405,58 @@ mod platform {
         let _ = Command::new("networksetup").args(["-setairportpower", "en0", "off"]).status();
         let _ = Command::new("pfctl").args(["-e", "-f", "/etc/pf.conf"]).status();
     }
+
+    pub fn spawn_native_tray(is_afk: Arc<AtomicBool>) {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(10));
+            let current_afk = is_afk.load(Ordering::SeqCst);
+            let state_str = if current_afk { "Active" } else { "Inactive" };
+            let script = format!(
+                "button returned of (display dialog \"KISS AV Guard Status: {}\" buttons {{\"Toggle AFK\", \"OK\"}} default button \"OK\")",
+                state_str
+            );
+
+            if let Ok(output) = Command::new("osascript").args(["-e", &script]).output() {
+                let result = String::from_utf8_lossy(&output.stdout);
+                if result.trim() == "Toggle AFK" {
+                    is_afk.store(!current_afk, Ordering::SeqCst);
+                }
+            }
+        }
+    }
 }
 
 // =========================================================================
 // MAIN CORE ENGINE
 // =========================================================================
 fn main() {
-    // Daemon startup - running silently without console output
     let is_afk = Arc::new(AtomicBool::new(false));
 
-    // AFK Mode Toggle Simulation (Triggers after 10 seconds)
-    let afk_clone = Arc::clone(&is_afk);
+    // Spawn platform-native tray interface
+    let tray_afk = Arc::clone(&is_afk);
     thread::spawn(move || {
-        thread::sleep(Duration::from_secs(10));
-        // AFK Guard Mode now active in background
-        afk_clone.store(true, Ordering::SeqCst);
+        platform::spawn_native_tray(tray_afk);
     });
 
     let mut last_activity_check = Instant::now();
 
     loop {
-        // Initiating silent cross-platform security sweep
-
         // Condition 1: Scan for hidden VNC stations, secondary desktops, or listening sockets
         match platform::scan_for_hidden_desktops() {
             Ok(suspicious) => {
                 if !suspicious.is_empty() {
-                    // ALERT: Unauthorized background desktop or session detected
-                    // ACTION: Disabling all network adapters immediately via killswitch
                     platform::execute_network_killswitch();
                     break;
                 }
             }
-            Err(_e) => {
-                // Desktop enumeration error occurred silently
-            }
+            Err(_e) => {}
         }
 
         // Condition 2: AFK State & Input Verification Check
         if is_afk.load(Ordering::SeqCst) {
             let idle_secs = platform::get_system_idle_time_secs();
 
-            // Unexpected physical or synthetic activity detected during AFK mode
             if idle_secs < 4 && last_activity_check.elapsed().as_secs() >= 5 {
-                // ALERT: Physical/Synthetic hardware input detected while locked in AFK mode
-                // ACTION: Executing network cut
                 platform::execute_network_killswitch();
                 break;
             }
