@@ -10,10 +10,10 @@ use std::time::{Duration, Instant};
 mod platform {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt;
-    use windows_sys::Win32::Foundation::{BOOL, LPARAM, TRUE};
+    use windows_sys::Win32::Foundation::{LPARAM, TRUE};
     use windows_sys::Win32::System::StationsAndDesktops::{
         EnumDesktopsW, EnumWindowStationsW, GetProcessWindowStation, OpenWindowStationW,
-        WINSTA_ENUMDESKTOPS,
+        WINSTA_ENUMERATE,
     };
     use windows_sys::Win32::System::SystemInformation::GetTickCount64;
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
@@ -37,8 +37,8 @@ mod platform {
 
     unsafe extern "system" fn enum_winsta_proc(lpsz_winsta: *const u16, lparam: LPARAM) -> i32 {
         if !lpsz_winsta.is_null() {
-            let hwinsta = OpenWindowStationW(lpsz_winsta, 0, WINSTA_ENUMDESKTOPS);
-            if hwinsta != 0 {
+            let hwinsta = OpenWindowStationW(lpsz_winsta, 0, WINSTA_ENUMERATE);
+            if !hwinsta.is_null() {
                 EnumDesktopsW(hwinsta, Some(enum_desktop_proc), lparam);
             }
         }
@@ -52,7 +52,7 @@ mod platform {
         unsafe {
             // 1. Enumerate current process window station
             let win_station = GetProcessWindowStation();
-            if win_station != 0 {
+            if !win_station.is_null() {
                 EnumDesktopsW(win_station, Some(enum_desktop_proc), lparam);
             }
 
@@ -122,7 +122,7 @@ mod platform {
             }
         }
 
-        // 2. Open TCP Socket Inspection for VNC Ports (5900-5999)
+        // 2. Open TCP Socket Inspection for VNC Ports (5900-5999 & 5800-5899)
         for path in &["/proc/net/tcp", "/proc/net/tcp6"] {
             if let Ok(content) = fs::read_to_string(path) {
                 for line in content.lines().skip(1) {
@@ -250,44 +250,45 @@ mod platform {
 // MAIN CORE ENGINE
 // =========================================================================
 fn main() {
-    println!("=== Hardened Security Daemon Active ===");
-
+    // Daemon startup - running silently without standard out output
     let is_afk = Arc::new(AtomicBool::new(false));
 
     // AFK Mode Toggle Simulation (Triggers after 10 seconds)
     let afk_clone = Arc::clone(&is_afk);
     thread::spawn(move || {
         thread::sleep(Duration::from_secs(10));
-        println!("[!] AFK Guard Mode Activated.");
+        // AFK Guard Mode now active in background
         afk_clone.store(true, Ordering::SeqCst);
     });
 
     let mut last_activity_check = Instant::now();
 
     loop {
-        println!("[*] Performing cross-platform security sweep...");
+        // Initiating silent cross-platform security sweep
 
         // Condition 1: Scan for hidden VNC stations, secondary desktops, or listening sockets
         match platform::scan_for_hidden_desktops() {
             Ok(suspicious) => {
                 if !suspicious.is_empty() {
-                    println!("[ALERT] Unauthorized background desktop or session detected: {:?}", suspicious);
-                    println!("[KILLSWITCH] Disabling all network adapters immediately!");
+                    // ALERT: Unauthorized background desktop or session detected
+                    // ACTION: Disabling all network adapters immediately via killswitch
                     platform::execute_network_killswitch();
                     break;
                 }
             }
-            Err(e) => eprintln!("[ERROR] Desktop enumeration error: {}", e),
+            Err(_e) => {
+                // Desktop enumeration error occurred silently
+            }
         }
 
         // Condition 2: AFK State & Input Verification Check
         if is_afk.load(Ordering::SeqCst) {
             let idle_secs = platform::get_system_idle_time_secs();
 
-            // Unexpected physical activity during AFK mode
+            // Unexpected physical or synthetic activity detected during AFK mode
             if idle_secs < 4 && last_activity_check.elapsed().as_secs() >= 5 {
-                println!("[ALERT] Physical/Synthetic hardware input detected while locked in AFK mode!");
-                println!("[KILLSWITCH] Executing network cut!");
+                // ALERT: Physical/Synthetic hardware input detected while locked in AFK mode
+                // ACTION: Executing network cut
                 platform::execute_network_killswitch();
                 break;
             }
