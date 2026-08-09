@@ -74,10 +74,10 @@ jobs:
           name: installer-${{ matrix.target }}-${{ matrix.format }}
           path: |
             target/**/release/*.deb
-            target/**/release/*.exe
+            target/**/release/*setup.exe
             target/**/release/*.dmg
             target/release/*.deb
-            target/release/*.exe
+            target/release/*setup.exe
             target/release/*.dmg
           if-no-files-found: error
 
@@ -93,14 +93,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release-assets
+          merge-multiple: true
 
       - name: Publish Assets to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            release-assets/**/*.deb
-            release-assets/**/*.exe
-            release-assets/**/*.dmg
+            release-assets/*.deb
+            release-assets/*setup.exe
+            release-assets/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
