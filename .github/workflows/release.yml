@@ -67,38 +67,16 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      # Step 3: Upload ONLY the generated installer files (.deb, *setup.exe, .dmg)
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
+      # Step 3: Direct Upload to GitHub Release
+      - name: Publish Asset to Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: installer-${{ matrix.target }}-${{ matrix.format }}
-          path: |
+          files: |
             target/**/release/*.deb
             target/**/release/*setup.exe
             target/**/release/*.dmg
             target/release/*.deb
             target/release/*setup.exe
             target/release/*.dmg
-          if-no-files-found: error
-
-  publish-release:
-    name: Publish GitHub Release
-    needs: build-and-package
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download all build artifacts into flat folder
-        uses: actions/download-artifact@v4
-        with:
-          path: release-assets
-          merge-multiple: true
-
-      - name: Publish Assets to GitHub Releases
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
