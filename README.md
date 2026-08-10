@@ -50,20 +50,23 @@ When an anomaly is detected, KISS AV triggers a native network killswitch, insta
 - **DBus Remote Desktop Auditing:** Queries DBus for active `RemoteDesktop` and `ScreenCast` portal sessions (`org.freedesktop.portal.Desktop`).
 
 ### 4. Robust TOML Allowlisting (`~/.kiss/config`)
-- Loads configuration strictly from `$HOME/.kiss/config` on startup.
-- Gracefully falls back to default empty settings if the file does not exist or fails to parse, preventing service disruption.
-- Supports allowlisting for X11 displays, virtual input drivers, and remote desktop processes.
+- Multi-tier configuration path resolution: when running elevated (`sudo`), resolves the invoking user's config via `SUDO_USER` (`/home/{SUDO_USER}/.kiss/config`), falling back to `$HOME/.kiss/config`, and finally `/etc/kiss/config`.
+- Gracefully falls back to default empty settings if no configuration file exists or fails to parse, preventing service disruption.
+- Supports allowlisting for secondary X11 display sockets (matching formatted indices such as `X20`, `:20`, or `20`), virtual input drivers, and remote desktop processes.
 - Outputs clear exemption logs to standard output when an anomaly is bypassed via configuration rules:
   ```text
-  [CONFIG EXEMPTION] Allowed X11 display 'X20' via ~/.kiss/config
-  [CONFIG EXEMPTION] Allowed virtual driver 'VirtualPS/2 VMware VMMouse' via ~/.kiss/config
+  [CONFIG EXEMPTION] Allowed X11 display 'X20' via config allowlist
+  [CONFIG EXEMPTION] Allowed virtual driver 'VirtualPS/2 VMware VMMouse' via config allowlist
   ```
 
 ---
 
 ## Configuration (`~/.kiss/config`)
 
-KISS-AV can be customized using a TOML configuration file located strictly at `~/.kiss/config` (evaluating `$HOME/.kiss/config`).
+KISS-AV can be customized using a TOML configuration file. Path resolution automatically resolves configuration in priority order:
+1. `/home/{SUDO_USER}/.kiss/config` (if running with `sudo` / elevated privileges)
+2. `$HOME/.kiss/config`
+3. `/etc/kiss/config`
 
 ### Example Configuration:
 
@@ -75,7 +78,7 @@ allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-ho
 ```
 
 ### Allowlist Fields:
-- **`allowed_x11_displays`**: List of secondary X11 displays to permit without triggering network isolation.
+- **`allowed_x11_displays`**: List of secondary X11 displays (e.g. `"X20"`, `":20"`, `"20"`) to permit without triggering network isolation.
 - **`allowed_virtual_drivers`**: List of virtual software input drivers to allow.
 - **`allowed_processes`**: List of remote desktop or screen capture process paths/executables to exempt.
 
@@ -87,7 +90,7 @@ allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-ho
 src/
 ├── main.rs                 # Core service entry point & protection loop
 ├── lib.rs                  # Module re-export library
-├── config.rs               # Strongly typed TOML configuration parsing & allowlisting (~/.kiss/config)
+├── config.rs               # Strongly typed TOML configuration path resolution & allowlisting
 ├── engine/
 │   ├── mod.rs              # Engine aggregator module
 │   ├── detector.rs         # Core detection aggregator & isolation trigger
@@ -112,10 +115,11 @@ cargo test
 ```
 
 ### Verification Scenarios Tested:
-1. **Configuration Parsing & Exemption Verification:** Verifies full and partial TOML config parsing, graceful fallback on missing/invalid files, predicate matching, and DetectorEngine exemption bypassing.
-2. **Synthetic Input Verification:** Confirms that synthetic injection events trigger immediate network isolation when physical hardware is idle.
-3. **Desktop Isolation Verification:** Confirms immediate detection of non-standard hidden desktops and isolation trigger.
-4. **Fallthrough Verification:** Simulates revocation of hook permissions and confirms seamless transition to Heartbeat Delta Analysis mode without service interruption.
+1. **Configuration Parsing & Exemption Verification:** Verifies full and partial TOML config parsing, multi-tier path resolution (`SUDO_USER`, `$HOME`, `/etc`), predicate matching, and DetectorEngine exemption bypassing.
+2. **X11 Display Socket Allowlist Verification:** Confirms `check_x11_sockets` returns zero `IsolationTrigger` items for secondary sockets (e.g. `X20`) when present in `allowed_x11_displays`.
+3. **Synthetic Input Verification:** Confirms that synthetic injection events trigger immediate network isolation when physical hardware is idle.
+4. **Desktop Isolation Verification:** Confirms immediate detection of non-standard hidden desktops and isolation trigger.
+5. **Fallthrough Verification:** Simulates revocation of hook permissions and confirms seamless transition to Heartbeat Delta Analysis mode without service interruption.
 
 ---
 

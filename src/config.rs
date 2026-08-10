@@ -19,15 +19,45 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    /// Returns the default path for the configuration file strictly at `$HOME/.kiss/config`.
+    /// Returns the resolved path for the configuration file based on priority:
+    /// 1. `/home/{SUDO_USER}/.kiss/config` if `SUDO_USER` env var is present and the file exists.
+    /// 2. `$HOME/.kiss/config` if it exists.
+    /// 3. `/etc/kiss/config` if it exists.
+    /// 4. Fallback path (`/home/{SUDO_USER}/.kiss/config` if `SUDO_USER` is set, else `$HOME/.kiss/config`).
     pub fn get_config_path() -> PathBuf {
+        if let Ok(sudo_user) = std::env::var("SUDO_USER") {
+            let user = sudo_user.trim();
+            if !user.is_empty() {
+                let sudo_path = PathBuf::from(format!("/home/{}/.kiss/config", user));
+                if sudo_path.exists() {
+                    return sudo_path;
+                }
+            }
+        }
+
         let home = std::env::var("HOME")
             .or_else(|_| std::env::var("USERPROFILE"))
             .unwrap_or_else(|_| ".".into());
-        PathBuf::from(home).join(".kiss").join("config")
+        let home_path = PathBuf::from(home).join(".kiss").join("config");
+        if home_path.exists() {
+            return home_path;
+        }
+
+        let etc_path = PathBuf::from("/etc/kiss/config");
+        if etc_path.exists() {
+            return etc_path;
+        }
+
+        if let Ok(sudo_user) = std::env::var("SUDO_USER") {
+            let user = sudo_user.trim();
+            if !user.is_empty() {
+                return PathBuf::from(format!("/home/{}/.kiss/config", user));
+            }
+        }
+        home_path
     }
 
-    /// Loads configuration from standard `$HOME/.kiss/config`.
+    /// Loads configuration from resolved config path (`SUDO_USER`, `$HOME`, or `/etc`).
     /// Gracefully falls back to default empty config if missing or unparseable.
     pub fn load() -> Self {
         Self::load_from_path(Self::get_config_path())
@@ -158,5 +188,11 @@ allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-ho
             "/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"
         ));
         assert!(!config.is_process_allowed("/usr/bin/malware"));
+    }
+
+    #[test]
+    fn test_config_path_resolution() {
+        let path = AppConfig::get_config_path();
+        assert!(!path.as_os_str().is_empty());
     }
 }

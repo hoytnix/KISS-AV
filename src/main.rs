@@ -1,3 +1,4 @@
+use kiss_daemon::config::AppConfig;
 use kiss_daemon::engine::detector::DetectorEngine;
 use kiss_daemon::platform;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -8,6 +9,9 @@ use std::time::Duration;
 
 fn main() {
     println!("Starting Enterprise-Grade KISS-AV Security Daemon...");
+
+    // 0. Load Application Config
+    let config = AppConfig::load();
 
     // 1. Elevated Execution & Privilege Check
     match platform::check_elevation() {
@@ -24,7 +28,7 @@ fn main() {
     }
 
     // 2. Initialize Engine & Fallback Architecture
-    let detector = DetectorEngine::new(15);
+    let detector = DetectorEngine::with_config(15, config.clone());
     let (operating_mode, perm_status) = detector.fallback.determine_operating_mode();
     println!(
         "[ENGINE MODE] Operating mode: {:?} - {}",
@@ -64,7 +68,7 @@ fn main() {
     // 7. Main Core Sensor Audit & Isolation Loop
     println!("[CORE ENGINE] KISS-AV Protection Loop Active.");
     loop {
-        let violations = detector.run_sensor_audit();
+        let violations = detector.run_checks(&config);
         if !violations.is_empty() {
             println!(
                 "[SECURITY BREACH] {} violations detected! Network isolation executed.",

@@ -158,3 +158,46 @@ fn test_fallthrough_verification() {
     );
 }
 
+#[test]
+fn test_check_x11_sockets_allowlist() {
+    use kiss_daemon::engine::detector::check_x11_sockets;
+
+    let socket_dir = std::path::Path::new("/tmp/.X11-unix");
+    let _ = std::fs::create_dir_all(socket_dir);
+    let socket_path = socket_dir.join("X20");
+    let created = std::fs::File::create(&socket_path).is_ok();
+
+    if created {
+        // 1. AppConfig containing "X20" in allowed_x11_displays
+        let toml_allowed = r#"
+[allowlist]
+allowed_x11_displays = ["X20"]
+"#;
+        let config_allowed = AppConfig::parse(toml_allowed).expect("Failed to parse allowed config");
+        let triggers = check_x11_sockets(&config_allowed);
+
+        let x20_triggers: Vec<_> = triggers
+            .iter()
+            .filter(|t| t.desktop_identifier.as_deref() == Some("X20"))
+            .collect();
+        assert!(
+            x20_triggers.is_empty(),
+            "check_x11_sockets must return zero IsolationTrigger items for allowed display X20"
+        );
+
+        // 2. AppConfig without "X20" -> should flag X20 and return IsolationTrigger
+        let config_unallowed = AppConfig::default();
+        let triggers_unallowed = check_x11_sockets(&config_unallowed);
+        let x20_unallowed_triggers: Vec<_> = triggers_unallowed
+            .iter()
+            .filter(|t| t.desktop_identifier.as_deref() == Some("X20"))
+            .collect();
+        assert_eq!(
+            x20_unallowed_triggers.len(),
+            1,
+            "check_x11_sockets must return an IsolationTrigger item when X20 is not allowed"
+        );
+
+        let _ = std::fs::remove_file(&socket_path);
+    }
+}
