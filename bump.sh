@@ -15,12 +15,6 @@ if [[ ! "$TYPE" =~ ^(patch|minor|major)$ ]]; then
   exit 1
 fi
 
-# Ensure working tree is clean
-if [[ -n $(git status --porcelain) ]]; then
-  echo "Error: Working directory is not clean. Commit or stash changes first."
-  exit 1
-fi
-
 # Extract current version from Cargo.toml
 CURRENT_VERSION=$(sed -n -E 's/^version = "([0-9]+\.[0-9]+\.[0-9]+)"/\1/p' Cargo.toml | head -n 1)
 
