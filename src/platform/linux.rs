@@ -14,6 +14,12 @@ pub fn check_elevation() -> Result<bool, String> {
     }
 }
 
+pub fn is_crostini() -> bool {
+    std::env::var("KISS_FORCE_CROSTINI").is_ok()
+        || std::path::Path::new("/dev/wl0").exists()
+        || std::path::Path::new("/usr/bin/sommelier").exists()
+}
+
 pub fn check_hook_permissions() -> PermissionStatus {
     let elevation = check_elevation().unwrap_or(false);
     let mut dev_readable = false;
@@ -88,6 +94,9 @@ pub fn scan_for_hidden_desktops() -> Result<Vec<String>, String> {
             let file_name = entry.file_name();
             let name_str = file_name.to_string_lossy();
             if name_str.starts_with('X') && name_str != "X0" {
+                if is_crostini() && (name_str == "X1" || name_str == "X20") {
+                    continue;
+                }
                 suspicious.push(format!("Secondary X11 socket display index detected: {}", name_str));
             }
         }
@@ -156,6 +165,9 @@ pub fn scan_remote_sessions() -> Vec<RemoteSessionInfo> {
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().into_owned();
             if name.starts_with('X') && name != "X0" {
+                if is_crostini() && (name == "X1" || name == "X20") {
+                    continue;
+                }
                 sessions.push(RemoteSessionInfo {
                     session_type: "X11 Secondary Socket".into(),
                     identifier: name.clone(),
@@ -260,8 +272,17 @@ pub fn get_system_idle_time_secs() -> u64 {
 }
 
 pub fn execute_network_killswitch() {
-    let _ = Command::new("rfkill").args(["block", "all"]).status();
-    let _ = Command::new("nmcli").args(["networking", "off"]).status();
+    if is_crostini() {
+        println!("[ISOLATION] Crostini environment detected. Applying container-level network isolation.");
+        let _ = Command::new("ip").args(["link", "set", "eth0", "down"]).status();
+        let _ = Command::new("iptables").args(["-F"]).status();
+        let _ = Command::new("iptables").args(["-P", "INPUT", "DROP"]).status();
+        let _ = Command::new("iptables").args(["-P", "OUTPUT", "DROP"]).status();
+        let _ = Command::new("iptables").args(["-P", "FORWARD", "DROP"]).status();
+    } else {
+        let _ = Command::new("rfkill").args(["block", "all"]).status();
+        let _ = Command::new("nmcli").args(["networking", "off"]).status();
+    }
 }
 
 pub fn spawn_native_tray(is_afk: Arc<AtomicBool>) {

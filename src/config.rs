@@ -12,13 +12,35 @@ pub struct AllowlistConfig {
     pub allowed_processes: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct AppConfig {
     #[serde(default)]
     pub allowlist: AllowlistConfig,
 }
 
+impl Default for AppConfig {
+    fn default() -> Self {
+        let mut config = Self {
+            allowlist: AllowlistConfig::default(),
+        };
+        config.apply_crostini_defaults();
+        config
+    }
+}
+
 impl AppConfig {
+    /// Applies Crostini display proxy allowlist defaults (X1, :1, X20, :20) if Crostini is detected.
+    pub fn apply_crostini_defaults(&mut self) {
+        if crate::platform::is_crostini() {
+            let defaults = ["X1", ":1", "X20", ":20"];
+            for d in defaults {
+                if !self.allowlist.allowed_x11_displays.iter().any(|existing| existing == d) {
+                    self.allowlist.allowed_x11_displays.push(d.to_string());
+                }
+            }
+        }
+    }
+
     /// Returns the resolved path for the configuration file based on priority:
     /// 1. `/home/{SUDO_USER}/.kiss/config` if `SUDO_USER` env var is present and the file exists.
     /// 2. `$HOME/.kiss/config` if it exists.
@@ -76,12 +98,23 @@ impl AppConfig {
         }
     }
 
-    /// Expands `~` prefix to user home directory.
+    /// Expands `~` prefix to user home directory (or /home/$SUDO_USER if SUDO_USER is set).
     fn expand_home(path: &Path) -> PathBuf {
         if path.starts_with("~") {
-            let home = std::env::var("HOME")
-                .or_else(|_| std::env::var("USERPROFILE"))
-                .unwrap_or_else(|_| ".".into());
+            let home = if let Ok(sudo_user) = std::env::var("SUDO_USER") {
+                let user = sudo_user.trim();
+                if !user.is_empty() {
+                    format!("/home/{}", user)
+                } else {
+                    std::env::var("HOME")
+                        .or_else(|_| std::env::var("USERPROFILE"))
+                        .unwrap_or_else(|_| ".".into())
+                }
+            } else {
+                std::env::var("HOME")
+                    .or_else(|_| std::env::var("USERPROFILE"))
+                    .unwrap_or_else(|_| ".".into())
+            };
             let mut components = path.components();
             components.next(); // skip '~'
             let mut path_buf = PathBuf::from(home);
@@ -96,11 +129,29 @@ impl AppConfig {
 
     /// Parses TOML content string into `AppConfig`.
     pub fn parse(content: &str) -> Result<Self, toml::de::Error> {
-        toml::from_str(content)
+        let mut config: Self = toml::from_str(content)?;
+        config.apply_crostini_defaults();
+        Ok(config)
     }
 
     /// Checks if an X11 display identifier (e.g. "X20" or ":20") is allowed.
     pub fn is_display_allowed(&self, display: &str) -> bool {
+        if crate::platform::is_crostini() {
+            let trimmed = display.trim();
+            let socket_num_opt: Option<u32> = if trimmed.starts_with('X') || trimmed.starts_with(':') {
+                trimmed[1..].parse().ok()
+            } else {
+                trimmed.parse().ok()
+            };
+            if let Some(socket_num) = socket_num_opt {
+                if socket_num == 1 || socket_num == 20 {
+                    return true;
+                }
+            }
+            if trimmed == "X1" || trimmed == ":1" || trimmed == "X20" || trimmed == ":20" {
+                return true;
+            }
+        }
         self.allowlist.allowed_x11_displays.iter().any(|d| {
             d == display
                 || (d.starts_with(':') && display.starts_with('X') && &d[1..] == &display[1..])
@@ -227,5 +278,44 @@ allowed_x11_displays = ["X20"]
         assert!(summary.contains("├── Allowed X11 Displays: X20"));
         assert!(summary.contains("├── Allowed Virtual Drivers: None"));
         assert!(summary.contains("└── Allowed Processes: None"));
+    }
+
+    #[test]
+    fn test_crostini_display_proxy_auto_exemption() {
+        std::env::set_var("KISS_FORCE_CROSTINI", "1");
+        let config = AppConfig::default();
+
+        assert!(config.is_display_allowed("X1"));
+        assert!(config.is_display_allowed(":1"));
+        assert!(config.is_display_allowed("X20"));
+        assert!(config.is_display_allowed(":20"));
+        assert!(config.allowlist.allowed_x11_displays.contains(&"X1".to_string()));
+        assert!(config.allowlist.allowed_x11_displays.contains(&":1".to_string()));
+        assert!(config.allowlist.allowed_x11_displays.contains(&"X20".to_string()));
+        assert!(config.allowlist.allowed_x11_displays.contains(&":20".to_string()));
+
+        std::env::remove_var("KISS_FORCE_CROSTINI");
+    }
+
+    #[test]
+    fn test_sudo_user_config_path_resolution() {
+        let orig_home = std::env::var("HOME").ok();
+        std::env::set_var("SUDO_USER", "penguin");
+        std::env::set_var("HOME", "/root");
+
+        let path = AppConfig::get_config_path();
+        assert_eq!(
+            path,
+            PathBuf::from("/home/penguin/.kiss/config"),
+            "Path should resolve to /home/penguin/.kiss/config when SUDO_USER is penguin and HOME is /root"
+        );
+
+        let expanded = AppConfig::expand_home(Path::new("~/.kiss/config"));
+        assert_eq!(expanded, PathBuf::from("/home/penguin/.kiss/config"));
+
+        std::env::remove_var("SUDO_USER");
+        if let Some(home) = orig_home {
+            std::env::set_var("HOME", home);
+        }
     }
 }

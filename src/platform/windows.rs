@@ -61,6 +61,10 @@ pub fn check_elevation() -> Result<bool, String> {
     Ok(false)
 }
 
+pub fn is_crostini() -> bool {
+    std::env::var("KISS_FORCE_CROSTINI").is_ok()
+}
+
 pub fn check_hook_permissions() -> PermissionStatus {
     let is_elevated = check_elevation().unwrap_or(false);
     PermissionStatus {

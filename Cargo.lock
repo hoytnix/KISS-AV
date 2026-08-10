@@ -56,7 +56,7 @@ dependencies = [
 
 [[package]]
 name = "kiss-daemon"
-version = "2.1.1"
+version = "2.1.2"
 dependencies = [
  "cfg-if",
  "goldberg",

@@ -201,3 +201,65 @@ allowed_x11_displays = ["X20"]
         let _ = std::fs::remove_file(&socket_path);
     }
 }
+
+#[test]
+fn test_crostini_display_proxy_verification() {
+    use kiss_daemon::engine::detector::check_x11_sockets;
+
+    std::env::set_var("KISS_FORCE_CROSTINI", "1");
+
+    let socket_dir = std::path::Path::new("/tmp/.X11-unix");
+    let _ = std::fs::create_dir_all(socket_dir);
+    let socket_x20 = socket_dir.join("X20");
+    let socket_x1 = socket_dir.join("X1");
+    let _ = std::fs::File::create(&socket_x20);
+    let _ = std::fs::File::create(&socket_x1);
+
+    // Clean install default AppConfig on Crostini
+    let config = AppConfig::default();
+
+    let triggers = check_x11_sockets(&config);
+    let crostini_triggers: Vec<_> = triggers
+        .iter()
+        .filter(|t| {
+            let id = t.desktop_identifier.as_deref().unwrap_or("");
+            id == "X1" || id == "X20" || id == ":1" || id == ":20"
+        })
+        .collect();
+
+    assert!(
+        crostini_triggers.is_empty(),
+        "Crostini Sommelier display proxy sockets X1 and X20 must be auto-exempted"
+    );
+
+    let _ = std::fs::remove_file(&socket_x20);
+    let _ = std::fs::remove_file(&socket_x1);
+    std::env::remove_var("KISS_FORCE_CROSTINI");
+}
+
+#[test]
+fn test_sudo_user_config_path_priority() {
+    let orig_home = std::env::var("HOME").ok();
+    std::env::set_var("SUDO_USER", "testuser");
+    std::env::set_var("HOME", "/root");
+
+    let resolved_path = AppConfig::get_config_path();
+    assert_eq!(
+        resolved_path,
+        std::path::PathBuf::from("/home/testuser/.kiss/config")
+    );
+
+    std::env::remove_var("SUDO_USER");
+    if let Some(home) = orig_home {
+        std::env::set_var("HOME", home);
+    }
+}
+
+#[test]
+fn test_crostini_network_isolation_execution() {
+    std::env::set_var("KISS_FORCE_CROSTINI", "1");
+    assert!(kiss_daemon::platform::is_crostini());
+    // Executing killswitch in Crostini mode should use container-aware logic
+    kiss_daemon::platform::execute_network_killswitch();
+    std::env::remove_var("KISS_FORCE_CROSTINI");
+}

@@ -18,6 +18,10 @@ pub fn check_elevation() -> Result<bool, String> {
     }
 }
 
+pub fn is_crostini() -> bool {
+    std::env::var("KISS_FORCE_CROSTINI").is_ok()
+}
+
 pub fn check_hook_permissions() -> PermissionStatus {
     let trusted = unsafe { AXIsProcessTrusted() };
     if !trusted {
