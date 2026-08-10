@@ -67,6 +67,8 @@ fn main() {
 
     // 7. Main Core Sensor Audit & Isolation Loop
     println!("[CORE ENGINE] KISS-AV Protection Loop Active.");
+    let config_path = AppConfig::get_config_path();
+    println!("{}", config.display_summary(&config_path));
     loop {
         let violations = detector.run_checks(&config);
         if !violations.is_empty() {

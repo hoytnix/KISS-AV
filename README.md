@@ -1,6 +1,6 @@
 # Keep It Simple Stupid Antivirus (KISS-AV)
 
-## KISS AV v2.1.0 Enterprise Edition
+## KISS AV v2.1.1 Enterprise Edition
 
 ### Downloads
 

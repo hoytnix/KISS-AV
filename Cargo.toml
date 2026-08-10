@@ -1,6 +1,6 @@
 [package]
 name = "kiss-daemon"
-version = "2.1.0"
+version = "2.1.1"
 edition = "2021"
 description = "Keep It Simple Stupid Antivirus"
 authors = ["Michael Scott Hoyt (tehwiz.com)"]

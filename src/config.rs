@@ -120,6 +120,25 @@ impl AppConfig {
     pub fn is_process_allowed(&self, path: &str) -> bool {
         self.allowlist.allowed_processes.iter().any(|p| p == path)
     }
+
+    /// Formats the configuration into a pretty, plain-English summary tree string.
+    pub fn display_summary(&self, path: &Path) -> String {
+        let format_list = |list: &[String]| -> String {
+            if list.is_empty() {
+                "None".to_string()
+            } else {
+                list.join(", ")
+            }
+        };
+
+        format!(
+            "[CONFIG] Configuration loaded from {}\n  ├── Allowed X11 Displays: {}\n  ├── Allowed Virtual Drivers: {}\n  └── Allowed Processes: {}",
+            path.display(),
+            format_list(&self.allowlist.allowed_x11_displays),
+            format_list(&self.allowlist.allowed_virtual_drivers),
+            format_list(&self.allowlist.allowed_processes)
+        )
+    }
 }
 
 #[cfg(test)]
@@ -194,5 +213,19 @@ allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-ho
     fn test_config_path_resolution() {
         let path = AppConfig::get_config_path();
         assert!(!path.as_os_str().is_empty());
+    }
+
+    #[test]
+    fn test_display_summary() {
+        let toml_str = r#"
+[allowlist]
+allowed_x11_displays = ["X20"]
+"#;
+        let config = AppConfig::parse(toml_str).unwrap();
+        let summary = config.display_summary(Path::new("/tmp/test_config"));
+        assert!(summary.contains("[CONFIG] Configuration loaded from /tmp/test_config"));
+        assert!(summary.contains("├── Allowed X11 Displays: X20"));
+        assert!(summary.contains("├── Allowed Virtual Drivers: None"));
+        assert!(summary.contains("└── Allowed Processes: None"));
     }
 }
