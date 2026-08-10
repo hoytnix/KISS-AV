@@ -1,13 +1,13 @@
 # Keep It Simple Stupid Antivirus (KISS-AV)
 
-## KISS AV v2.1.2 Enterprise Edition
+## KISS AV v2.2.0 Enterprise Edition
 
 ### Downloads
 
-* **[Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v2.1.2/kiss-daemon_2.1.2_x64-setup.exe)**
-* **[macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v2.1.2/KissDaemon_2.1.2_aarch64.dmg)**
-* **[Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v2.1.2/kiss-daemon_2.1.2_amd64.deb)**
-* **[Linux arm64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v2.1.2/kiss-daemon_2.1.2_arm64.deb)**
+* **[Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v2.2.0/kiss-daemon_2.2.0_x64-setup.exe)**
+* **[macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v2.2.0/KissDaemon_2.2.0_aarch64.dmg)**
+* **[Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v2.2.0/kiss-daemon_2.2.0_amd64.deb)**
+* **[Linux arm64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v2.2.0/kiss-daemon_2.2.0_arm64.deb)**
 
 ---
 
