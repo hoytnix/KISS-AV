@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # -----------------------------------------------------------------------------
-# Bump Script for KISS AV (Cargo.toml, packager.json, README.md)
+# Bump Script for KISS AV (Cargo.toml, packager.json, README.md, Cargo.lock)
 # Usage: ./bump.sh [patch|minor|major]
 # -----------------------------------------------------------------------------
 
@@ -61,9 +61,14 @@ if [[ -f "packager.json" ]]; then
   sed "${SED_INPLACE[@]}" -E "s/\"version\": \"[0-9]+\.[0-9]+\.[0-9]+\"/\"version\": \"${NEW_VERSION}\"/" packager.json
 fi
 
-# 3. Update README.md (handles both v1.2.13 and standalone 1.2.13)
+# 3. Update README.md (handles both vX.Y.Z and standalone X.Y.Z)
 if [[ -f "README.md" ]]; then
   sed "${SED_INPLACE[@]}" -E "s/${CURRENT_VERSION}/${NEW_VERSION}/g" README.md
+fi
+
+# 4. Update Cargo.lock if it exists (kiss-daemon package version)
+if [[ -f "Cargo.lock" ]]; then
+  sed "${SED_INPLACE[@]}" -E "/^name = \"kiss-daemon\"/{n;s/version = \"[0-9]+\.[0-9]+\.[0-9]+\"/version = \"${NEW_VERSION}\"/}" Cargo.lock
 fi
 
 echo "Updated files:"
