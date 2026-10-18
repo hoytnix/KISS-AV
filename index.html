@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<!-- saved from url=(0026)https://kissav.tehwiz.com/ -->
+<html lang="en" class="scroll-smooth"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KISS AV | The Ultimate AFK Security Killswitch</title>
+    <meta name="description" content="A fully standalone, obfuscated, cross-platform security engine built in Rust. Protect your unattended machines from remote access Trojans (RATs).">
+    
+    <!-- Tailwind CSS -->
+    <script src="./KISS AV _ The Ultimate AFK Security Killswitch_files/saved_resource"></script>
+    
+    <!-- Custom Configuration for Cyberpunk Theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            black: '#050505',
+                            dark: '#0a0a0a',
+                            green: '#00ff41',
+                            greenGlow: 'rgba(0, 255, 65, 0.4)',
+                            darkGreen: '#003b0f'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"Fira Code"', 'Consolas', 'Monaco', 'monospace'],
+                        sans: ['"Inter"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Animations & Styles */
+        body {
+            background-color: #050505;
+            color: #d1d5db;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.7);
+        }
+
+        .box-glow {
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: #00ff41;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Glitch Effect */
+        .glitch-wrapper {
+            position: relative;
+        }
+        
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+        }
+        
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 red;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        
+        .glitch::after {
+            left: -2px;
+            text-shadow: -2px 0 blue;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(62px, 9999px, 83px, 0); }
+            20% { clip: rect(29px, 9999px, 56px, 0); }
+            40% { clip: rect(10px, 9999px, 34px, 0); }
+            60% { clip: rect(81px, 9999px, 19px, 0); }
+            80% { clip: rect(9px, 9999px, 55px, 0); }
+            100% { clip: rect(69px, 9999px, 62px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(29px, 9999px, 56px, 0); }
+            20% { clip: rect(10px, 9999px, 34px, 0); }
+            40% { clip: rect(81px, 9999px, 19px, 0); }
+            60% { clip: rect(69px, 9999px, 62px, 0); }
+            80% { clip: rect(62px, 9999px, 83px, 0); }
+            100% { clip: rect(9px, 9999px, 55px, 0); }
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:"Inter", sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:"Fira Code", Consolas, Monaco, monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.relative{position:relative}.left-0{left:0px}.top-0{top:0px}.-z-10{z-index:-10}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-16{margin-top:4rem}.mt-20{margin-top:5rem}.mt-24{margin-top:6rem}.mt-6{margin-top:1.5rem}.mt-auto{margin-top:auto}.mb-1{margin-bottom:0.25rem}.inline-block{display:inline-block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-12{height:3rem}.h-3{height:0.75rem}.h-6{height:1.5rem}.h-64{height:16rem}.h-full{height:100%}.min-h-screen{min-height:100vh}.w-12{width:3rem}.w-3{width:0.75rem}.w-6{width:1.5rem}.w-full{width:100%}.max-w-2xl{max-width:42rem}.max-w-3xl{max-width:48rem}.max-w-4xl{max-width:56rem}.max-w-5xl{max-width:64rem}.max-w-7xl{max-width:80rem}.flex-shrink-0{flex-shrink:0}.flex-grow{flex-grow:1}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.space-x-2 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.5rem * var(--tw-space-x-reverse));margin-left:calc(0.5rem * calc(1 - var(--tw-space-x-reverse)))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.space-y-8 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem * var(--tw-space-y-reverse))}.overflow-y-auto{overflow-y:auto}.overflow-x-hidden{overflow-x:hidden}.scroll-smooth{scroll-behavior:smooth}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.rounded-b-lg{border-bottom-right-radius:0.5rem;border-bottom-left-radius:0.5rem}.rounded-t-lg{border-top-left-radius:0.5rem;border-top-right-radius:0.5rem}.border{border-width:1px}.border-2{border-width:2px}.border-b{border-bottom-width:1px}.border-b-0{border-bottom-width:0px}.border-l-4{border-left-width:4px}.border-t{border-top-width:1px}.border-cyber-darkGreen{--tw-border-opacity:1;border-color:rgb(0 59 15 / var(--tw-border-opacity, 1))}.border-cyber-darkGreen\/30{border-color:rgb(0 59 15 / 0.3)}.border-cyber-green{--tw-border-opacity:1;border-color:rgb(0 255 65 / var(--tw-border-opacity, 1))}.border-cyber-green\/30{border-color:rgb(0 255 65 / 0.3)}.border-cyber-green\/50{border-color:rgb(0 255 65 / 0.5)}.border-gray-700{--tw-border-opacity:1;border-color:rgb(55 65 81 / var(--tw-border-opacity, 1))}.border-gray-800{--tw-border-opacity:1;border-color:rgb(31 41 55 / var(--tw-border-opacity, 1))}.border-red-600{--tw-border-opacity:1;border-color:rgb(220 38 38 / var(--tw-border-opacity, 1))}.bg-black{--tw-bg-opacity:1;background-color:rgb(0 0 0 / var(--tw-bg-opacity, 1))}.bg-cyber-black{--tw-bg-opacity:1;background-color:rgb(5 5 5 / var(--tw-bg-opacity, 1))}.bg-cyber-black\/80{background-color:rgb(5 5 5 / 0.8)}.bg-cyber-dark{--tw-bg-opacity:1;background-color:rgb(10 10 10 / var(--tw-bg-opacity, 1))}.bg-cyber-dark\/80{background-color:rgb(10 10 10 / 0.8)}.bg-cyber-darkGreen\/40{background-color:rgb(0 59 15 / 0.4)}.bg-cyber-darkGreen\/50{background-color:rgb(0 59 15 / 0.5)}.bg-gray-900{--tw-bg-opacity:1;background-color:rgb(17 24 39 / var(--tw-bg-opacity, 1))}.bg-green-500{--tw-bg-opacity:1;background-color:rgb(34 197 94 / var(--tw-bg-opacity, 1))}.bg-red-500{--tw-bg-opacity:1;background-color:rgb(239 68 68 / var(--tw-bg-opacity, 1))}.bg-transparent{background-color:transparent}.bg-yellow-500{--tw-bg-opacity:1;background-color:rgb(234 179 8 / var(--tw-bg-opacity, 1))}.bg-gradient-to-b{background-image:linear-gradient(to bottom, var(--tw-gradient-stops))}.from-cyber-dark{--tw-gradient-from:#0a0a0a var(--tw-gradient-from-position);--tw-gradient-to:rgb(10 10 10 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.to-black{--tw-gradient-to:#000 var(--tw-gradient-to-position)}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.pb-20{padding-bottom:5rem}.pt-32{padding-top:8rem}.text-left{text-align:left}.text-center{text-align:center}.font-mono{font-family:"Fira Code", Consolas, Monaco, monospace}.font-sans{font-family:"Inter", sans-serif}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-5xl{font-size:3rem;line-height:1}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-light{font-weight:300}.leading-relaxed{line-height:1.625}.tracking-tight{letter-spacing:-0.025em}.tracking-widest{letter-spacing:0.1em}.text-cyber-green{--tw-text-opacity:1;color:rgb(0 255 65 / var(--tw-text-opacity, 1))}.text-gray-300{--tw-text-opacity:1;color:rgb(209 213 219 / var(--tw-text-opacity, 1))}.text-gray-400{--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-red-500{--tw-text-opacity:1;color:rgb(239 68 68 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}.text-yellow-400{--tw-text-opacity:1;color:rgb(250 204 21 / var(--tw-text-opacity, 1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.opacity-20{opacity:0.2}.drop-shadow-\[0_0_10px_rgba\(255\2c 0\2c 0\2c 0\.5\)\]{--tw-drop-shadow:drop-shadow(0 0 10px rgba(255,0,0,0.5));filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:border-cyber-green:hover{--tw-border-opacity:1;border-color:rgb(0 255 65 / var(--tw-border-opacity, 1))}.hover\:bg-cyber-green:hover{--tw-bg-opacity:1;background-color:rgb(0 255 65 / var(--tw-bg-opacity, 1))}.hover\:text-black:hover{--tw-text-opacity:1;color:rgb(0 0 0 / var(--tw-text-opacity, 1))}.hover\:text-cyber-green:hover{--tw-text-opacity:1;color:rgb(0 255 65 / var(--tw-text-opacity, 1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:bg-cyber-green\/20{background-color:rgb(0 255 65 / 0.2)}@media (min-width: 640px){.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}@media (min-width: 768px){.md\:inline{display:inline}.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}.md\:p-12{padding:3rem}.md\:px-12{padding-left:3rem;padding-right:3rem}.md\:px-6{padding-left:1.5rem;padding-right:1.5rem}.md\:text-center{text-align:center}.md\:text-2xl{font-size:1.5rem;line-height:2rem}.md\:text-4xl{font-size:2.25rem;line-height:2.5rem}.md\:text-7xl{font-size:4.5rem;line-height:1}.md\:text-base{font-size:1rem;line-height:1.5rem}}@media (min-width: 1024px){.lg\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.lg\:px-8{padding-left:2rem;padding-right:2rem}}</style></head>
+<body class="font-sans antialiased overflow-x-hidden relative min-h-screen flex flex-col">
+
+    <!-- Matrix Rain Canvas Background -->
+    <canvas id="matrix-canvas" class="fixed top-0 left-0 w-full h-full -z-10 opacity-20 pointer-events-none" width="1460" height="1093"></canvas>
+
+    <!-- Navigation -->
+    <nav class="w-full py-6 px-4 md:px-12 flex justify-between items-center border-b border-cyber-darkGreen/30 bg-cyber-black/80 backdrop-blur-sm fixed z-50">
+        <div class="flex items-center gap-2">
+            <span class="text-3xl drop-shadow-[0_0_10px_rgba(255,0,0,0.5)]" role="img" aria-label="kiss">💋</span>
+            <span class="text-2xl font-bold tracking-widest text-cyber-green font-mono">KISS AV</span>
+        </div>
+        <div>
+            <a href="https://github.com/hoytnix/KISS-AV" target="_blank" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+                <span class="hidden md:inline font-mono text-sm">GitHub</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-32 pb-20 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col items-center text-center">
+        
+        <!-- Hero Section -->
+        <div class="max-w-4xl space-y-8">
+            <div class="inline-block px-4 py-1 rounded-full bg-cyber-darkGreen/40 border border-cyber-green/50 text-cyber-green text-xs font-mono mb-4">
+                [STATUS] v2.2.2 RELEASED
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 glitch-wrapper">
+                <span class="glitch" data-text="THE ULTIMATE AFK">THE ULTIMATE AFK</span><br>
+                <span class="text-cyber-green text-glow">SECURITY KILLSWITCH.</span>
+            </h1>
+            
+            <p class="text-xl md:text-2xl text-gray-300 font-light max-w-3xl mx-auto leading-relaxed">
+                Are you deploying unattended machines or sensitive workstations, only to worry about hidden remote access Trojans (RATs) or unauthorized local input?
+            </p>
+        </div>
+
+        <!-- Terminal Showcase -->
+        <div class="w-full max-w-4xl mt-16 text-left">
+            <div class="rounded-t-lg bg-gray-900 px-4 py-2 flex items-center border border-gray-700 border-b-0">
+                <div class="flex space-x-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <div class="mx-auto text-xs text-gray-400 font-mono">root@kiss-daemon:~</div>
+            </div>
+            <div class="bg-black border border-gray-700 rounded-b-lg p-6 font-mono text-sm md:text-base overflow-x-hidden box-glow h-64 overflow-y-auto" id="terminal-window"><div class="text-gray-300 mb-1">$ kiss-daemon --start</div><div class="text-cyber-green mb-1">[INFO] === KISS Security Daemon Engine Starting ===</div><div class="text-gray-400 mb-1">[INFO] Obfuscated execution loop initialized. (goldberg stmts injected)</div><div class="text-blue-400 mb-1">[*] Performing 5-second cross-platform security sweep...</div><div class="text-cyber-green mb-1">[OK] EnumDesktopsW check: CLEAN</div><div class="text-cyber-green mb-1">[OK] AFK Hardware Activity check: IDLE</div><div class="text-gray-500 mb-1">...</div><div class="terminal-cursor"></div></div>
+        </div>
+
+        <!-- Agitation / Amplify -->
+        <div class="mt-16 text-left bg-cyber-dark p-6 rounded-lg border-l-4 border-red-600 box-shadow-red max-w-3xl mx-auto">
+            <p class="text-gray-400 font-mono text-sm md:text-base">
+                <span class="text-red-500 font-bold">WARNING:</span> Standard security tools leave strings and detection logic exposed in plaintext. A basic disassembler is all an attacker needs to find your detection routines, patch them out, and bypass your alarms—leaving your system completely vulnerable to secondary desktop sessions (VNC/RDP) or spoofed hardware inputs.
+            </p>
+        </div>
+
+        <!-- The Solution (System/Transformation) -->
+        <div class="max-w-4xl mt-20 space-y-6">
+            <h2 class="text-3xl md:text-4xl font-bold text-white">Enter <span class="text-cyber-green text-glow">KISS AV</span>.</h2>
+            <p class="text-lg text-gray-400 leading-relaxed text-left md:text-center">
+                A fully standalone, obfuscated, cross-platform security engine built in Rust. It actively sweeps for hidden virtual desktops and unauthorized hardware interrupts while your system is designated as Away From Keyboard (AFK).
+            </p>
+            <p class="text-lg text-gray-400 leading-relaxed text-left md:text-center">
+                When an anomaly is detected, it doesn't just write a log entry—it <strong class="text-white">immediately triggers a localized network killswitch</strong>, neutralizing remote threats before data exfiltration can occur.
+            </p>
+        </div>
+
+        <!-- Core Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl mt-16">
+            <!-- Feature 1 -->
+            <div class="bg-cyber-dark/80 backdrop-blur-md p-8 rounded-xl border border-cyber-darkGreen hover:border-cyber-green transition-colors text-left group">
+                <div class="w-12 h-12 bg-cyber-darkGreen/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-cyber-green/20 transition-colors">
+                    <svg class="w-6 h-6 text-cyber-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">Zero-Dependency Native Installers</h3>
+                <p class="text-gray-400 text-sm">Built with <code>cargo-packager</code> to distribute standalone binaries (.msi, .dmg, .deb) that require no pre-installed runtimes. Ready to deploy instantly.</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="bg-cyber-dark/80 backdrop-blur-md p-8 rounded-xl border border-cyber-darkGreen hover:border-cyber-green transition-colors text-left group">
+                <div class="w-12 h-12 bg-cyber-darkGreen/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-cyber-green/20 transition-colors">
+                    <svg class="w-6 h-6 text-cyber-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">Military-Grade Obfuscation</h3>
+                <p class="text-gray-400 text-sm">Uses procedural macros via <code>goldberg</code> to encrypt strings and mangle the control flow of the execution loop at compile-time. Reverse engineering is a nightmare.</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="bg-cyber-dark/80 backdrop-blur-md p-8 rounded-xl border border-cyber-darkGreen hover:border-cyber-green transition-colors text-left group">
+                <div class="w-12 h-12 bg-cyber-darkGreen/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-cyber-green/20 transition-colors">
+                    <svg class="w-6 h-6 text-cyber-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">Hidden Desktop Detection</h3>
+                <p class="text-gray-400 text-sm">Scans for unauthorized window stations, secondary X11/VNC servers, and hidden screen-sharing daemons that other AVs completely miss.</p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="bg-cyber-dark/80 backdrop-blur-md p-8 rounded-xl border border-cyber-darkGreen hover:border-cyber-green transition-colors text-left group">
+                <div class="w-12 h-12 bg-cyber-darkGreen/50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-cyber-green/20 transition-colors">
+                    <svg class="w-6 h-6 text-cyber-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">Instant Network Isolation</h3>
+                <p class="text-gray-400 text-sm">Executes a hard shutdown of Wi-Fi and Ethernet interfaces via native commands (netsh, nmcli, networksetup) the millisecond a breach is confirmed.</p>
+            </div>
+        </div>
+
+        <!-- The Offer (Call to Action) -->
+        <div class="w-full max-w-5xl mt-24 bg-gradient-to-b from-cyber-dark to-black border border-cyber-green/30 rounded-2xl p-8 md:p-12 box-glow text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Secure Your Endpoints Today</h2>
+            <p class="text-gray-400 mb-8 max-w-2xl mx-auto">Download the v2.2.2 production-ready, highly secure installers. Completely free and open-source under the GNU GPL v3 License.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 justify-center items-center">
+                <!-- Windows Download -->
+                <a href="https://github.com/hoytnix/KISS-AV/releases/download/v2.2.2/kiss-daemon_2.2.2_x64-setup.exe" class="w-full px-6 py-4 bg-transparent border-2 border-cyber-green text-cyber-green hover:bg-cyber-green hover:text-black font-bold rounded-lg transition-all flex items-center justify-center gap-3 group">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"></path></svg>
+                    <span>Windows x64</span>
+                </a>
+                
+                <!-- macOS Download -->
+                <a href="https://github.com/hoytnix/KISS-AV/releases/download/v2.2.2/KissDaemon_2.2.2_aarch64.dmg" class="w-full px-6 py-4 bg-transparent border-2 border-cyber-green text-cyber-green hover:bg-cyber-green hover:text-black font-bold rounded-lg transition-all flex items-center justify-center gap-3 group">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+                    <span>macOS (ARM64)</span>
+                </a>
+
+                <!-- Linux amd64 Download -->
+                <a href="https://github.com/hoytnix/KISS-AV/releases/download/v2.2.2/kiss-daemon_2.2.2_amd64.deb" class="w-full px-6 py-4 bg-transparent border-2 border-cyber-green text-cyber-green hover:bg-cyber-green hover:text-black font-bold rounded-lg transition-all flex items-center justify-center gap-3 group">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12.007 0C8.423 0 5.485 2.305 4.195 5.562 2.645 6.307 1.55 7.842 1.55 9.688c0 1.942 1.206 3.568 2.894 4.237.458 5.481 5.093 9.771 10.665 9.771 1.758 0 3.418-.426 4.887-1.182A4.664 4.664 0 0 0 22.45 18.25c0-2.073-1.348-3.83-3.21-4.436-.08-4.88-3.95-8.835-8.834-8.988-.135-2.091-1.852-3.738-3.957-3.738H6.438c.676-1.503 2.187-2.54 3.966-2.54h3.691a3.673 3.673 0 0 1 3.67 3.674c0 1.268-.642 2.386-1.616 3.036.007.126.012.253.012.38 0 3.498-2.836 6.334-6.334 6.334a6.336 6.336 0 0 1-6.177-4.882A2.784 2.784 0 0 1 2.31 9.688a2.786 2.786 0 0 1 2.786-2.786h1.353c.123-.397.272-.782.443-1.155H4.996a4.996 4.996 0 0 0-4.996 4.996 4.996 4.996 0 0 0 4.382 4.957c.783 4.225 4.49 7.42 8.954 7.42 4.416 0 8.088-3.13 8.917-7.29a3.894 3.894 0 0 0 2.21 3.52c-1.31 1.154-3.036 1.865-4.912 1.865-5.111 0-9.256-4.145-9.256-9.256 0-3.666 2.128-6.84 5.253-8.337A5.405 5.405 0 0 0 12.007 0zm-2.05 13.918c-.808 0-1.464.656-1.464 1.465s.656 1.464 1.464 1.464c.81 0 1.465-.656 1.465-1.464s-.655-1.465-1.464-1.465zm4.814-1.64c-.81 0-1.465.655-1.465 1.464 0 .809.656 1.465 1.465 1.465.809 0 1.464-.656 1.464-1.465 0-.809-.655-1.464-1.464-1.464z"></path></svg>
+                    <span>Linux (amd64)</span>
+                </a>
+
+                <!-- Linux arm64 Download -->
+                <a href="https://github.com/hoytnix/KISS-AV/releases/download/v2.2.2/kiss-daemon_2.2.2_arm64.deb" class="w-full px-6 py-4 bg-transparent border-2 border-cyber-green text-cyber-green hover:bg-cyber-green hover:text-black font-bold rounded-lg transition-all flex items-center justify-center gap-3 group">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12.007 0C8.423 0 5.485 2.305 4.195 5.562 2.645 6.307 1.55 7.842 1.55 9.688c0 1.942 1.206 3.568 2.894 4.237.458 5.481 5.093 9.771 10.665 9.771 1.758 0 3.418-.426 4.887-1.182A4.664 4.664 0 0 0 22.45 18.25c0-2.073-1.348-3.83-3.21-4.436-.08-4.88-3.95-8.835-8.834-8.988-.135-2.091-1.852-3.738-3.957-3.738H6.438c.676-1.503 2.187-2.54 3.966-2.54h3.691a3.673 3.673 0 0 1 3.67 3.674c0 1.268-.642 2.386-1.616 3.036.007.126.012.253.012.38 0 3.498-2.836 6.334-6.334 6.334a6.336 6.336 0 0 1-6.177-4.882A2.784 2.784 0 0 1 2.31 9.688a2.786 2.786 0 0 1 2.786-2.786h1.353c.123-.397.272-.782.443-1.155H4.996a4.996 4.996 0 0 0-4.996 4.996 4.996 4.996 0 0 0 4.382 4.957c.783 4.225 4.49 7.42 8.954 7.42 4.416 0 8.088-3.13 8.917-7.29a3.894 3.894 0 0 0 2.21 3.52c-1.31 1.154-3.036 1.865-4.912 1.865-5.111 0-9.256-4.145-9.256-9.256 0-3.666 2.128-6.84 5.253-8.337A5.405 5.405 0 0 0 12.007 0zm-2.05 13.918c-.808 0-1.464.656-1.464 1.465s.656 1.464 1.464 1.464c.81 0 1.465-.656 1.465-1.464s-.655-1.465-1.464-1.465zm4.814-1.64c-.81 0-1.465.655-1.465 1.464 0 .809.656 1.465 1.465 1.465.809 0 1.464-.656 1.464-1.465 0-.809-.655-1.464-1.464-1.464z"></path></svg>
+                    <span>Linux (arm64)</span>
+                </a>
+            </div>
+            
+            <p class="text-xs text-gray-500 mt-6 font-mono">Build from source: <code>cargo packager --release</code></p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-gray-800 bg-cyber-black py-8 px-4 mt-auto">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm font-mono">
+            <div class="flex items-center gap-2">
+                <a href="https://tehwiz.com/" target="_blank" rel="noopener noreferrer" class="hover:text-cyber-green transition-colors">© <script>document.write(new Date().getFullYear())</script>2026 ISICECAKEOISIS. A TehWiz Production.</a>
+            </div>
+            <div class="flex gap-6">
+                <a href="https://github.com/hoytnix/KISS-AV/blob/main/LICENSE" target="_blank" class="hover:text-cyber-green transition-colors">GNU GPL v3 License</a>
+                <a href="https://github.com/hoytnix/KISS-AV" target="_blank" class="hover:text-cyber-green transition-colors">GitHub Repository</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // --- Matrix Rain Canvas Effect ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレゲゼデベペオォコソトノホモヨョロゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const nums = '0123456789';
+        const alphabet = katakana + latin + nums;
+
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+
+        const draw = () => {
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        };
+
+        setInterval(draw, 30);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // --- Terminal Typing Effect ---
+        const terminalOutput = [
+            { text: "$ kiss-daemon --start", color: "text-gray-300", delay: 500 },
+            { text: "[INFO] === KISS Security Daemon Engine Starting ===", color: "text-cyber-green", delay: 1000 },
+            { text: "[INFO] Obfuscated execution loop initialized. (goldberg stmts injected)", color: "text-gray-400", delay: 1500 },
+            { text: "[*] Performing 5-second cross-platform security sweep...", color: "text-blue-400", delay: 2500 },
+            { text: "[OK] EnumDesktopsW check: CLEAN", color: "text-cyber-green", delay: 3000 },
+            { text: "[OK] AFK Hardware Activity check: IDLE", color: "text-cyber-green", delay: 3500 },
+            { text: "...", color: "text-gray-500", delay: 4500 },
+            { text: "[*] Performing 5-second cross-platform security sweep...", color: "text-blue-400", delay: 5000 },
+            { text: "[ALERT] Unauthorized Window Station detected: 'Winsta0\\HiddenVNC'", color: "text-red-500 font-bold", delay: 5500 },
+            { text: "[CRITICAL] Breach Confirmed. Initiating Network Killswitch.", color: "text-red-500 font-bold", delay: 6000 },
+            { text: "[EXEC] netsh interface set interface Wi-Fi disable", color: "text-yellow-400", delay: 6500 },
+            { text: "[EXEC] netsh interface set interface Ethernet disable", color: "text-yellow-400", delay: 6700 },
+            { text: "[SUCCESS] System Isolated. Threat Neutralized.", color: "text-cyber-green font-bold text-glow", delay: 7200 }
+        ];
+
+        const terminalWindow = document.getElementById('terminal-window');
+        
+        async function runTerminal() {
+            let htmlContent = "";
+            for (let i = 0; i < terminalOutput.length; i++) {
+                await new Promise(r => setTimeout(r, terminalOutput[i].delay - (i > 0 ? terminalOutput[i-1].delay : 0)));
+                htmlContent += `<div class="${terminalOutput[i].color} mb-1">${terminalOutput[i].text}</div>`;
+                terminalWindow.innerHTML = htmlContent + '<div class="terminal-cursor"></div>';
+                terminalWindow.scrollTop = terminalWindow.scrollHeight;
+            }
+            
+            // Loop the animation
+            setTimeout(() => {
+                terminalWindow.innerHTML = '<div class="terminal-cursor"></div>';
+                runTerminal();
+            }, 8000);
+        }
+
+        // Start terminal animation shortly after load
+        setTimeout(runTerminal, 1000);
+
+    </script>
+<script type="module" src="./KISS AV _ The Ultimate AFK Security Killswitch_files/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;f91b2d0791394b8eb0d60bdded48224d&quot;,&quot;r&quot;:1,&quot;spa&quot;:2}" crossorigin="anonymous"></script>
+
+
+</body></html>
