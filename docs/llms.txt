@@ -1,0 +1,87 @@
+# KISS AV
+
+> KISS AV (Keep It Simple Stupid Antivirus) is a thread-safe, compile-time obfuscated, cross-platform security daemon built in Rust. It actively detects hidden remote desktop sessions (HVNC, VNC, RDP), synthetic input injections, unauthorized hardware drivers, and background screen-scraping attempts while workstations are idle (AFK) or locked. Upon anomaly detection, KISS AV triggers a native network killswitch, instantly disabling Wi-Fi and Ethernet interfaces to prevent data exfiltration.
+
+## Overview
+
+KISS AV is designed for workstations, kiosks, unattended endpoints, and sensitive corporate hardware. Unlike traditional signature-based antivirus solutions, KISS AV focuses on behavioral detection of unauthorized remote interactive sessions and hardware spoofing, paired with an immediate, non-recoverable native network isolation mechanism.
+
+- **Primary Repository**: [GitHub (hoytnix/KISS-AV)](https://github.com/hoytnix/KISS-AV)
+- **Website**: [KISS AV Homepage](https://kissav.tehwiz.com/)
+- **License**: GNU General Public License v3.0 ([LICENSE](https://github.com/hoytnix/KISS-AV/blob/main/LICENSE))
+- **Current Version**: v2.2.2 Enterprise Edition
+
+## Core Security Mechanisms
+
+### 1. Delta-Based Heartbeat Engine
+- Tracks physical hardware input timestamps using high-resolution monotonic clocks.
+- When physical input registers zero for 15+ seconds (Away From Keyboard / AFK), active background framebuffer captures or outbound socket connections are flagged.
+- Detects the divergence between real human physical interaction and automated/injected background activity.
+
+### 2. Platform-Specific Detection Architecture
+
+- **Windows (`src/platform/windows.rs`)**:
+  - Elevated token inspection (`OpenProcessToken` / `GetTokenInformation`).
+  - Isolated low-level keyboard and mouse hooks (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`) driven on a dedicated Win32 message pump thread (`GetMessageW` / `DispatchMessageW`) to prevent UI freezes.
+  - Inspection of `LLKHF_INJECTED` and `LLMHF_INJECTED` flags to detect synthetic software input events.
+  - Raw Input device auditing (`GetRawInputDeviceList`) to separate physical USB/Bluetooth devices from virtual software drivers.
+  - Window station and desktop enumeration (`EnumWindowStationsW` / `EnumDesktopsW`) to expose hidden HVNC desktops (excluding standard stations like `Default`, `Winlogon`, `Disconnect`, `Screen-saver`).
+
+- **macOS (`src/platform/macos.rs`)**:
+  - Process trust validation via Accessibility APIs (`AXIsProcessTrusted`).
+  - Active SkyLight display space audits to detect hidden virtual workspaces or secondary display spaces.
+  - Quartz event taps (`CGEventTap`) inspecting mouse/keyboard event flags and target PIDs (`kCGEventTargetUnixProcessID`).
+
+- **Linux (`src/platform/linux.rs`)**:
+  - Device inspection via `/sys/class/input` and `/proc/bus/input/devices` checking bus types (e.g. `BUS_USB`, `BUS_BLUETOOTH` vs `BUS_VIRTUAL` / `uinput`).
+  - Active scanning of `/tmp/.X11-unix/` for unauthorized secondary X11 display sockets (e.g., `:1`, `:20`, `:99`).
+  - DBus portal auditing (`org.freedesktop.portal.Desktop`) querying active `RemoteDesktop` and `ScreenCast` sessions.
+
+### 3. Native Network Isolation Killswitch
+Once a critical isolation event is triggered, native OS utilities execute immediate interface termination:
+- **Windows**: `netsh interface set interface "Wi-Fi" disable` & `netsh interface set interface "Ethernet" disable`
+- **Linux**: `nmcli networking off` (with fallback device disablers)
+- **macOS**: `networksetup -setairportpower en0 off` / interface shutdowns
+
+### 4. Obfuscation & Hardening
+- Compile-time control flow flattening and string encryption using `goldberg` procedural macros.
+- Stripped symbols, link-time optimization (`lto = true`), and size optimization (`opt-level = "z"`).
+
+## Configuration (`~/.kiss/config`)
+
+KISS AV uses a TOML configuration file with multi-tier path resolution:
+1. Elevated sudo resolution: `/home/{SUDO_USER}/.kiss/config`
+2. User directory: `$HOME/.kiss/config`
+3. System fallback: `/etc/kiss/config`
+
+### Configuration Example
+```toml
+[allowlist]
+# Secondary X11 display sockets to permit without triggering network isolation
+allowed_x11_displays = ["X20", "X21"]
+
+# Virtual software input drivers to allow
+allowed_virtual_drivers = ["VirtualPS/2 VMware VMMouse"]
+
+# Remote desktop or screen capture executables to exempt
+allowed_processes = ["/opt/google/chrome-remote-desktop/chrome-remote-desktop-host"]
+```
+
+## Downloads & Releases (v2.2.2)
+
+- [Windows x64 Installer (.exe)](https://github.com/hoytnix/KISS-AV/releases/download/v2.2.2/kiss-daemon_2.2.2_x64-setup.exe): Standalone Windows executable installer built with cargo-packager.
+- [macOS aarch64 Installer (.dmg)](https://github.com/hoytnix/KISS-AV/releases/download/v2.2.2/KissDaemon_2.2.2_aarch64.dmg): Apple Silicon native DMG image.
+- [Linux amd64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v2.2.2/kiss-daemon_2.2.2_amd64.deb): Debian/Ubuntu x86_64 package.
+- [Linux arm64 Package (.deb)](https://github.com/hoytnix/KISS-AV/releases/download/v2.2.2/kiss-daemon_2.2.2_arm64.deb): Debian/Ubuntu ARM64 package.
+
+## Building and Verification
+
+- **Build Native Release Packages**:
+  ```bash
+  cargo install cargo-packager
+  cargo packager --release
+  ```
+- **Run Automated Test Suite**:
+  ```bash
+  cargo test
+  ```
