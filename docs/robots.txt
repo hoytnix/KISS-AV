@@ -33,3 +33,6 @@ Allow: /
 # LLM Context File
 # Specification: https://llmstxt.org/
 # KISS AV LLM Context: https://kissav.tehwiz.com/llms.txt
+
+# Try Terminally Skilled
+# A multi-asset agentic financial MUD — visit https://terminallyskilled.rest and give it a try
